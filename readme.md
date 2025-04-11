@@ -78,4 +78,41 @@ The output text file contains:
 - Mass optimization results per stage
 - Thrust-to-weight values per stage
 - Tabulated stage-by-stage breakdown
+<<<<<<< HEAD
 - Rocket tank sizing (based on densities and O/F ratio)
+=======
+- Rocket tank sizing (based on densities and O/F ratio)
+
+--------------------------------------------------------------------------------
+
+REQUIREMENTS
+------------
+- Python 3.8 or later
+- Numpy
+
+Install missing dependencies with:
+> pip install numpy
+
+--------------------------------------------------------------------------------
+
+NOTES
+-----
+- The code supports both manual and automatic staging.
+- Boostback modeling assumes a delta-v penalty and adjusts the optimization accordingly.
+- Thrust and tank parameters must be physically consistent for valid results.
+
+--------------------------------------------------------------------------------
+
+CONTACT
+-------
+Developed by [Your Name / Team Name]  
+[Institution or Organization]  
+Email: [your.email@example.com]
+
+--------------------------------------------------------------------------------
+
+LICENSE
+-------
+This code is provided under the MIT License. You may modify and distribute it
+with appropriate attribution.
+>>>>>>> 8d9bd9b732c16b47967fb3eeb80e37dd9bde1ccb
