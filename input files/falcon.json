@@ -1,0 +1,17 @@
+{
+    "target orbit":300,
+    "average isp":300,
+    "thrust by weight":[1.55,0.56],
+    "number of stages":2,
+    "isps":[311,348],
+    "structural factors":[0.059,0.041],
+    "payload":22800,
+    "Boostback":"True",
+    "step diameters":[3.7,3.7],
+    "fuel density":820,
+    "oxidiser density":1141,
+    "tank diameters":3.66,
+    "o/f":2.6,
+    "engine height":2.3,
+    "engine thrust":[845e3,915e3]
+}
