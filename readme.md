@@ -79,5 +79,3 @@ The output text file contains:
 - Thrust-to-weight values per stage
 - Tabulated stage-by-stage breakdown
 - Rocket tank sizing (based on densities and O/F ratio)
-
---------------------------------------------------------------------------------
