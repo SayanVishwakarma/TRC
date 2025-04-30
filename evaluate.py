@@ -4,11 +4,13 @@ from __init__ import *
 # Define a class called 'evaluate' to perform the rocket evaluation
 class evaluate:
     # Set the rocket name
-    rocket_name = "falcon 9"
-
+    rocket_name = "TRC"
+    output_folder="output files/" + rocket_name + " files"
+    os.makedirs(output_folder, exist_ok=True)
     # Define input and output file paths
     input_path = "input files/" + rocket_name + ".json"
-    output_path = "output files/" + rocket_name + ".txt"
+    output_path = "output files/" + rocket_name + " files/" + rocket_name + ".txt"
+    json_output_path = "output files/" + rocket_name + " files/" + rocket_name + ".json"
 
     # Open the input JSON file and load rocket parameters into a dictionary
     with open(input_path) as file:
@@ -19,7 +21,9 @@ class evaluate:
 
     # Print a header with the rocket name
     print("**********************************************************************************", rocket_name, "**********************************************************************************")
-
+    print(f"---Input Parameters---")
+    for key,val in data.items():
+        print(f"{key} : {val}")    
     # Extract initial thrust-to-weight ratio and average specific impulse
     initial_thrust_by_weight = data['thrust by weight'][0]
     Isp = data['average isp']
@@ -29,7 +33,7 @@ class evaluate:
 
     # Calculate the required delta-v using the delta_v module
     # Parameters: T/W, Isp, target orbit (km), payload mass (fixed here as 2e9), and boostback flag
-    r1 = delta_v.delta_v(initial_thrust_by_weight, Isp, orbit, 2e9, data["Boostback"])
+    r1 = delta_v.delta_v(initial_thrust_by_weight, Isp, orbit, 2e7, data["Boostback"])
 
     # Display the breakdown of the delta-v calculation
     r1.display_breakdown()
@@ -62,6 +66,8 @@ class evaluate:
     # Get the resulting rocket object from the optimizer
     rocket = r2.rocket
 
+    r2.create_rocket_json(json_output_path)
+
     # Add additional rocket configuration data (e.g., tank, engine, fuel) to the rocket object
     rocket.add_rocket_data(data)
 
@@ -79,6 +85,10 @@ class evaluate:
     # Print a footer to mark end of output
     print("********************************************************************************************************************************")
 
+    #sys.stdout.close()
+    #sys.stdout = sys.__stdout__
+
+    #rocket.simulate_trajectory()
 '''
 # Old interactive code block for manual input (now replaced by file-based approach)
 

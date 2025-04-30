@@ -157,26 +157,26 @@ class stage_optimizer:
         data = {}
 
         # Step masses
-        data["Step Total Mass (kg)"] = [round(self.step_masses[i], 2) for i in range(self.number_of_stages)]
-        data["Step Structural Mass (kg)"] = [round(self.step_masses[i] * self.epsilons[i], 2) for i in range(self.number_of_stages)]
-        data["Step Propellant Mass (kg)"] = [round(self.step_masses[i] * (1 - self.epsilons[i]), 2) for i in range(self.number_of_stages)]
+        data["Step Total Mass (kg)"] = [int(self.step_masses[i]) for i in range(self.number_of_stages)]
+        data["Step Structural Mass (kg)"] = [int(self.step_masses[i] * self.epsilons[i]) for i in range(self.number_of_stages)]
+        data["Step Propellant Mass (kg)"] = [int(self.step_masses[i] * (1 - self.epsilons[i])) for i in range(self.number_of_stages)]
 
         if self.boostback:
-            data["Fuel Mass for Ascent (kg)"] = [round(self.step_masses[i] * (1 - self.epsilons_ascent[i]), 2) for i in range(self.number_of_stages)]
-            data["Fuel Mass for Boostback (kg)"] = [round(self.step_masses[i] * self.epsilons_ascent[i] * (1 - self.epsilons_boostback[i]), 2) for i in range(self.number_of_stages)]
+            data["Fuel Mass for Ascent (kg)"] = [int(self.step_masses[i] * (1 - self.epsilons_ascent[i])) for i in range(self.number_of_stages)]
+            data["Fuel Mass for Boostback (kg)"] = [int(self.step_masses[i] * self.epsilons_ascent[i] * (1 - self.epsilons_boostback[i])) for i in range(self.number_of_stages)]
         else:
             data["Delta-v (m/s)"] = [
-                round(-self.Isps[i]*g*np.log(self.betas[i] + (1 - self.betas[i]) * self.epsilons_ascent[i]), 2)
+                int(-self.Isps[i]*g*np.log(self.betas[i] + (1 - self.betas[i]) * self.epsilons_ascent[i]))
                 for i in range(self.number_of_stages)
             ]
 
         if self.boostback:
             data["Delta-v Ascent (m/s)"] = [
-                round(-self.Isps[i]*g*np.log(self.betas[i] + (1 - self.betas[i]) * self.epsilons_ascent[i]), 2)
+                int(-self.Isps[i]*g*np.log(self.betas[i] + (1 - self.betas[i]) * self.epsilons_ascent[i]))
                 for i in range(self.number_of_stages)
             ]
             data["Delta-v Boostback (m/s)"] = [
-                round(-self.Isps[0]*g*np.log(self.epsilons_boostback[i]), 2) for i in range(self.number_of_stages)
+                int(-self.Isps[0]*g*np.log(self.epsilons_boostback[i])) for i in range(self.number_of_stages)
             ]
 
         data["Stage Total Mass (kg)"] = [round(self.stage_masses[i], 2) for i in range(self.number_of_stages)]
@@ -189,8 +189,9 @@ class stage_optimizer:
         # Print total delta-v summary
         print("\n===================================================================================")
         if self.boostback:
-            print(f"Delta-v Achieved (excluding boostback): {round(self.delta_v_achieved - self.Isps[0]*g*np.log(self.epsilon_boostback), 2)} m/s")
+            print(f"Delta-v Achieved (excluding boostback): {round(self.delta_v_achieved, 2)} m/s")
             print(f"Boostback Delta-v Achieved: {round(-self.Isps[0]*g*np.log(self.epsilon_boostback), 2)} m/s")
+            print(f"Total Delta-v Achieved: {round(self.delta_v_achieved-self.Isps[0]*g*np.log(self.epsilon_boostback), 2)} m/s")
         else:
             print(f"Total Delta-v Achieved: {round(self.calculate_delta_v(), 2)} m/s")
         print("===================================================================================")
@@ -200,6 +201,44 @@ class stage_optimizer:
     def create_rocket_object(self):
         for i in range(0,self.number_of_stages):
             self.rocket.add_stage(self.step_masses[i]*(1-self.epsilons[i]),self.stage_masses[i],self.step_masses[i],self.Isps[i])
+
+
+    def create_rocket_json(self, filename):
+        # Create a dictionary to hold the results
+        results = {
+            "rocket_mass_breakdown": {
+                "step_total_mass": [round(mass, 0) for mass in self.step_masses],
+                "step_structural_mass": [round(self.step_masses[i] * self.epsilons[i], 0) for i in range(self.number_of_stages)],
+                "step_propellant_mass": [round(self.step_masses[i] * (1 - self.epsilons[i]), 0) for i in range(self.number_of_stages)],
+                "stage_total_mass": [round(mass, 0) for mass in self.stage_masses]
+            }
+        }
+        
+        # If boostback is used, add additional info to the results dictionary
+        if self.boostback:
+            results["boostback"] = {
+                "fuel_mass_used_for_ascent": [round(self.step_masses[i] * (1 - self.epsilons_ascent[i]), 0) for i in range(self.number_of_stages)],
+                "fuel_mass_used_for_boostback": [round(self.step_masses[i] * self.epsilons_ascent[i] * (1 - self.epsilons_boostback[i]), 0) for i in range(self.number_of_stages)],
+            }
+
+        # Add delta-v calculations to the results dictionary
+        if not self.boostback:
+            results["delta_v"] = {
+                "step_delta_v": [round(-self.Isps[i] * g * np.log(self.betas[i] + (1 - self.betas[i]) * self.epsilons_ascent[i]), 0) for i in range(self.number_of_stages)],
+                "delta_v_achieved": round(self.calculate_delta_v(), 2),
+            }
+        else:
+            results["delta_v"] = {
+                "step_delta_v_during_ascent": [round(-self.Isps[i] * g * np.log(self.betas[i] + (1 - self.betas[i]) * self.epsilons_ascent[i]), 0) for i in range(self.number_of_stages)],
+                "boostback_delta_v": [round(-self.Isps[0] * g * np.log(self.epsilons_boostback[i]), 2) for i in range(self.number_of_stages)],
+                "delta_v_achieved": round(self.delta_v_achieved - self.Isps[0] * g * np.log(self.epsilon_boostback), 2),
+                "boostback_delta_v_achieved": round(-self.Isps[0] * g * np.log(self.epsilon_boostback), 2),
+            }
+        
+
+        # Save the results to a JSON file
+        with open(filename, 'w') as json_file:
+            json.dump(results, json_file, indent=4)
 
 
 

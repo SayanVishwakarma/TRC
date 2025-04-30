@@ -17,7 +17,7 @@ class delta_v:
 
         # Compute orbital and initial velocity
         self.orbit_velocity = (g * R_earth**2 / (R_earth + self.target_orbit))**0.5
-        self.initial_velocity = R_earth * np.cos(latitude / 180 * np.pi) * w_earth
+        self.initial_velocity = R_earth * np.cos(latitude) * w_earth
 
         # Initialize losses
         self.steering_velocity_loss = 0

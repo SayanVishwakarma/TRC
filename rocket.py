@@ -208,4 +208,17 @@ class rocket:
         df = pd.DataFrame(results)
         print(df.to_markdown())
         print(f"\nTotal Rocket Height: {self.rocket_height:.2f} m")
+        print("Note that the total rocket height does not include the height of the payload fairing")
         return df
+    
+    def simulate_trajectory(self):
+        import trajectory
+        #print("Simulating trajectory")
+        data={'stage masses':np.array(self.stage_masses)+self.payload,
+              'propellant masses':self.step_fuel_masses,
+              'thrust by weight':[1.9,0.8],
+              'isp':self.Isps}
+        traj=trajectory.trajectory2(data)
+        traj.model()
+        traj.plotter()
+        traj.plot_altitudes()
