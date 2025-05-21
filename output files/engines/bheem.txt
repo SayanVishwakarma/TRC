@@ -1,0 +1,46 @@
+total propellant flow rate (kg/s)=574.879064151785
+chamber pressure (Pa)=0.8261234793603229
+Isp/c*=-48978786188.132355
+fuel pump flow rate (kg/s)=122.94872835771862
+oxidizer pump flow rate (kg/s)=445.09862451670057
+fuel flow rate of the fuel-rich preburner (kg/s)=79.33278743642168
+fuel-rich turbine gas flow rate (kg/s)=156.39609764676538
+oxidizer flow rate of the fuel-rich preburner (kg/s)=97.73424407406958
+fuel flow rate of the oxidizer-rich preburner (kg/s)=16.17584370028779
+oxidizer-rich turbine gas flow rate (kg/s)=356.41407940931555
+oxidizer flow rate of the oxidizer-rich preburner (kg/s)=356.21611712130345
+outlet pressure of the fuel pump (Pa)=1016214.006573999
+fuel pump head (Pa)=607170.6993120975
+outlet pressure of the oxidizer pump (Pa)=1134706.071583279
+oxidizer pump head (Pa)=981749.2606052827
+fuel-rich preburner pressure (Pa)=557528.0859772913
+mixture ratio of the oxidizer-rich preburner=595773.7744314497
+mixture ratio of the fuel-rich preburner=712663.1714760602
+chamber pressure (Pa)=611344.3229932728
+oxidizer-rich preburner pressure (Pa)=715346.9089337084
+inlet pressure of the fuel-rich turbine (Pa)=630381.0629830852
+inlet pressure of the oxidizer-rich turbine (Pa)=855044.4855392388
+outlet pressure of the fuel-rich turbine (Pa)=4.450278775593377
+outlet pressure of the oxidizer-rich turbine (Pa)=1.25233219595348
+fuel-rich turbine pressure ratio=209857.4482410022
+oxidizer-rich turbine pressure ratio=212697.64505185816
+fuel turbopump power (W)=207813.89271272466
+fuel-rich turbine power (W)=484168.1549196829
+fuel pump power (W)=482554.00405194605
+oxidizer turbopump power (W)=484252.68891041394
+oxidizer-rich turbine power (W)=3.431503417355269e+22
+oxidizer pump power (W)=-4.839836807353202e+22
+dummy variable, ignore=-5.4782333601980336e+22
+dummy variable, ignore=-1.717456946148424e+23
+dummy variable, ignore=-5.2432074201193656e+22
+dummy variable, ignore=4.157694728098695e+22
+[-1.42835517e-02  8.26960067e+00  3.85802728e-05  1.39240669e+07
+ -4.54951134e-03  3.45885958e-01  1.58776495e-02 -9.05694495e-02
+  2.79843399e+00 -6.90098913e-02 -1.70450033e-01  7.54712391e-05
+ -3.92754299e-06  4.74778660e-07  9.21142253e-03 -4.43104474e-01
+ -7.79542135e-03 -3.96671307e-01  8.80293396e-02  3.75165870e-03
+ -7.74151426e-02  3.61149409e-03  7.82080794e-01  3.31950800e-01
+ -2.52904251e-01 -1.08457597e+00 -8.25141757e-02  1.09352724e-02
+ -5.88575949e-03  4.22001896e-03  4.70391741e-20  1.74662895e-21
+ -3.64996412e-21  9.96285941e-21 -8.58973796e-21 -3.06747307e-20
+  9.49996691e-18 -1.79536936e-17]

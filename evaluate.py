@@ -88,7 +88,7 @@ class evaluate:
     #sys.stdout.close()
     #sys.stdout = sys.__stdout__
 
-    #rocket.simulate_trajectory()
+    rocket.simulate_trajectory()
 '''
 # Old interactive code block for manual input (now replaced by file-based approach)
 
