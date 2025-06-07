@@ -1,42 +1,42 @@
 {
     "rocket_mass_breakdown": {
         "step_total_mass": [
-            485838.0,
-            120684.0
+            1951536.0,
+            271294.0
         ],
         "step_structural_mass": [
-            24953.0,
-            5238.0
+            100231.0,
+            11774.0
         ],
         "step_propellant_mass": [
-            460885.0,
-            115446.0
+            1851305.0,
+            259520.0
         ],
         "stage_total_mass": [
-            606521.0,
-            120684.0
+            2222830.0,
+            271294.0
         ]
     },
     "boostback": {
         "fuel_mass_used_for_ascent": [
-            448846.0,
-            115446.0
+            1802944.0,
+            259520.0
         ],
         "fuel_mass_used_for_boostback": [
-            12040.0,
+            48361.0,
             0.0
         ]
     },
     "delta_v": {
         "step_delta_v_during_ascent": [
-            3807.0,
-            5568.0
+            4949.0,
+            7301.0
         ],
         "boostback_delta_v": [
             1200.0,
             -0.0
         ],
-        "delta_v_achieved": 10574.9,
+        "delta_v_achieved": 13450.22,
         "boostback_delta_v_achieved": 1200.0
     }
 }

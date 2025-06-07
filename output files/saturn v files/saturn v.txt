@@ -1,0 +1,94 @@
+********************************************************************************** saturn v **********************************************************************************
+---Input Parameters---
+rocket name : saturn v
+target orbit : 185
+average isp : 300
+thrust by weight : [1.53, 1.03, 0.88]
+number of stages : 3
+isps : [263, 421, 421]
+structural factors : [0.057, 0.081, 0.109]
+payload : 50000
+Boostback : False
+step diameters : [3.7, 3.7]
+fuel density : 820
+oxidiser density : 1141
+tank diameters : 3.66
+o/f : 2.6
+engine height : 2.3
+engine thrust : [845000.0, 915000.0, 100000.0]
+
+###################################   DELTA-V BREAKDOWN   ##############################
+
+|                          |   Delta-v (m/s) |
+|:-------------------------|----------------:|
+| Required Delta-v (m/s)   |        10599.5  |
+| Initial Velocity (m/s)   |          405.22 |
+| Orbital Velocity (m/s)   |         7901.52 |
+| Gravitational Loss (m/s) |         1853.18 |
+| Drag Loss (m/s)          |           50    |
+| Boostback Delta-v (m/s)  |         1200    |
+
+################################# ROCKET MASS & Delta-v BREAKDOWN ###################################
+
+=====================================================================================
+|                           |               1 |      2 |       3 |
+|:--------------------------|----------------:|-------:|--------:|
+| Step Total Mass (kg)      |     1.40028e+06 | 108496 | 33072   |
+| Step Structural Mass (kg) | 79815           |   8788 |  3604   |
+| Step Propellant Mass (kg) |     1.32046e+06 |  99708 | 29467   |
+| Delta-v (m/s)             |  4559           |   3032 |  1807   |
+| Stage Total Mass (kg)     |     1.54185e+06 | 141570 | 33072.8 |
+
+===================================================================================
+Total Delta-v Achieved: 9399.48 m/s
+===================================================================================
+
+###################################   ROCKET DIMENSIONS   ##############################
+
+|    | Stage   |   Fuel Mass (kg) |   Oxidiser Mass (kg) |   Fuel Tank Height (m) |   Oxidiser Tank Height (m) |   Intertank Height (m) |   Engine Count |   Total Stage Height (m) |
+|---:|:--------|-----------------:|---------------------:|-----------------------:|---------------------------:|-----------------------:|---------------:|-------------------------:|
+|  0 | Stage 1 |        366794    |             953666   |                  43.74 |                      80.66 |                      0 |             28 |                   126.7  |
+|  1 | Stage 2 |         27696.9  |              72011.9 |                   4.43 |                       7.22 |                      0 |              2 |                    13.95 |
+|  2 | Stage 3 |          8185.52 |              21282.3 |                   2.17 |                       2.99 |                      0 |              3 |                     7.46 |
+
+Total Rocket Height: 150.11 m
+Note that the total rocket height does not include the height of the payload fairing
+********************************************************************************************************************************
+Rocket liftoff from [5572.2     0.   3088.72] km. Earth rotates along the Z-axis
+Stage 1 burnout:
+at 110.11 km at 2.65 minutes
+
+downrange position from launch site (in earth centered earth fixed frame) = [122.43 139.32   2.64] km
+velocity vector at burnout (in earth centered earth fixed frame) = [1842.1  2802.19 -472.74] m/s
+acceleration vector at burnout (in earth centered earth fixed frame) = [ 12.71  31.52 -13.36] m/s^2
+direction vector at burnout (in earth centered earth fixed frame) = [ 0.54  0.83 -0.14] m/s
+downrange position from launch site (in earth centered inertial frame) = [122.44 268.82   2.64] km
+position of launch site at burnout (in earth centered inertial frame) = [5571.83  -64.54 3088.72] km
+velocity vector at burnout (in earth centered inertial frame) = [1831.97 3216.31 -472.74] m/s
+acceleration vector at burnout (in earth centered inertial frame) = [ 12.27  31.78 -13.36] m/s
+
+Stage 2 burnout:
+at 326.18 km at 6.2 minutes
+
+downrange position from launch site (in earth centered earth fixed frame) = [ 429.96  968.75 -280.21] km
+velocity vector at burnout (in earth centered earth fixed frame) = [  969.99  5318.67 -2376.63] m/s
+acceleration vector at burnout (in earth centered earth fixed frame) = [ -5.33  17.54 -12.58] m/s^2
+direction vector at burnout (in earth centered earth fixed frame) = [ 0.16  0.9  -0.4 ] m/s
+downrange position from launch site (in earth centered inertial frame) = [ 423.74 1275.17 -280.21] km
+position of launch site at burnout (in earth centered inertial frame) = [5570.16 -150.74 3088.72] km
+velocity vector at burnout (in earth centered inertial frame) = [  899.54  5755.16 -2376.63] m/s
+acceleration vector at burnout (in earth centered inertial frame) = [ -6.13  17.68 -12.58] m/s
+
+Stage 3 burnout:
+at 391.57 km at 9.03 minutes
+
+downrange position from launch site (in earth centered earth fixed frame) = [ 479.24 1971.07 -802.38] km
+velocity vector at burnout (in earth centered earth fixed frame) = [ -450.53  6556.45 -3845.74] m/s
+acceleration vector at burnout (in earth centered earth fixed frame) = [ -9.56   8.65 -10.06] m/s^2
+direction vector at burnout (in earth centered earth fixed frame) = [-0.06  0.86 -0.51] m/s
+downrange position from launch site (in earth centered inertial frame) = [ 457.38 2420.84 -802.38] km
+position of launch site at burnout (in earth centered inertial frame) = [5567.88 -219.47 3088.72] km
+velocity vector at burnout (in earth centered inertial frame) = [ -593.87  6996.53 -3845.74] m/s
+acceleration vector at burnout (in earth centered inertial frame) = [-10.55   8.58 -10.06] m/s
+
+Note that the burnout altitudes are not very accurate as they depend on the actual ascent trajectory which is not yet fixed

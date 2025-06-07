@@ -4,14 +4,18 @@ epsilon (Structural factor) is the ratio of structural mass to total mass (inert
 
 from __init__ import *
 
-class stage_optimizer:
+class stage_optimizer():
 
-    def __init__(self,delta_v,payload,number_of_stages,Isps,structural_factors,boostback=False):
+    def __init__(self,delta_v,delta_v_boostback,payload,number_of_stages,Isps,structural_factors,boostback=["False","False"]):
         self.boostback=boostback
         self.payload=payload
         self.number_of_stages=number_of_stages
         self.Isps=np.zeros(number_of_stages)
         self.epsilons=np.zeros(number_of_stages)
+        self.epsilons_ascent=np.zeros(number_of_stages)
+        self.epsilon_boostback=np.zeros(number_of_stages)
+        self.epsilons_boostback=np.zeros(number_of_stages)
+        self.delta_v_boostback=np.zeros(number_of_stages)
         self.stage_masses=np.zeros(number_of_stages)
         self.step_masses=np.zeros(number_of_stages)
         self.alpha_min=0
@@ -19,21 +23,23 @@ class stage_optimizer:
         self.alpha=(self.alpha_min+self.alpha_max)/2
         self.Isps=Isps
         self.epsilons=structural_factors*1
-        if not self.boostback:
-            self.delta_v=delta_v
-            self.boostback=False
-        else:
-            self.boostback=True
-            #print("Boostback")
-            self.delta_v=delta_v[0]
-            self.delta_v_boostback=delta_v[1]
-            self.epsilon_boostback=np.exp(-self.delta_v_boostback/self.Isps[0]/g)
-            self.epsilons_boostback=np.ones_like(self.epsilons)
-            self.epsilons_boostback[0]=self.epsilon_boostback
-            self.epsilons_ascent=self.epsilons*1
-            self.epsilons_ascent[0]=self.epsilons_ascent[0]/self.epsilon_boostback
-            self.epsilons[0]=self.epsilons[0]/self.epsilon_boostback
-            #print(self.epsilons)
+        for i in range(0,self.number_of_stages):
+            if not self.boostback[i]:
+                self.delta_v=delta_v
+                self.epsilons_ascent[i]=self.epsilons[i]
+                self.epsilons_boostback[i]=1
+            else:
+                #print(self.boostback[i])
+                self.delta_v=delta_v
+                self.delta_v_boostback[i]=delta_v_boostback[i]
+                self.epsilon_boostback[i]=np.exp(-self.delta_v_boostback[i]/self.Isps[i]/g)
+                #self.epsilons_boostback=np.ones_like(self.epsilons)
+                self.epsilons_boostback[i]=self.epsilon_boostback[i]
+                #self.epsilons_ascent=self.epsilons*1
+                self.epsilons_ascent[i]=self.epsilons[i]/self.epsilon_boostback[i]
+                self.epsilons[i]=self.epsilons[i]/self.epsilon_boostback[i]
+                #print(self.epsilons)
+        #print(self.epsilons_boostback,self.epsilons_ascent,self.epsilons)
         self.calculate_betas(self.alpha)
         alpha=fsolve(self.solve_for_betas_2,0)
         self.delta_v_achieved=self.calculate_delta_v()
@@ -153,6 +159,7 @@ class stage_optimizer:
 
 
     def tabulate_mass_breakdown(self):
+        out_str=""
         columns = [f"{i+1}" for i in range(self.number_of_stages)]
         data = {}
 
@@ -182,25 +189,32 @@ class stage_optimizer:
         data["Stage Total Mass (kg)"] = [round(self.stage_masses[i], 2) for i in range(self.number_of_stages)]
 
         df = pd.DataFrame(data, index=columns).T
-        print("\n################################# ROCKET MASS & Delta-v BREAKDOWN ###################################\n")
-        print("=====================================================================================")
-        print(df.to_markdown())
+        out_str+="\n################################# ROCKET MASS & Delta-v BREAKDOWN ###################################\n\n"
+        #print("\n################################# ROCKET MASS & Delta-v BREAKDOWN ###################################\n")
+        out_str+="=====================================================================================\n"
+        #print("=====================================================================================")
+        out_str+=df.to_markdown()+"\n"
+        #print(df.to_markdown())
 
         # Print total delta-v summary
-        print("\n===================================================================================")
-        if self.boostback:
-            print(f"Delta-v Achieved (excluding boostback): {round(self.delta_v_achieved, 2)} m/s")
-            print(f"Boostback Delta-v Achieved: {round(-self.Isps[0]*g*np.log(self.epsilon_boostback), 2)} m/s")
-            print(f"Total Delta-v Achieved: {round(self.delta_v_achieved-self.Isps[0]*g*np.log(self.epsilon_boostback), 2)} m/s")
+        out_str+="\n===================================================================================\n"
+        #print("\n===================================================================================")
+        if self.boostback[0] or self.boostback[1]:
+            del_v_b=0
+            out_str+=f"Delta-v Achieved (excluding boostback): {round(self.delta_v_achieved, 2)} m/s\n"
+            for i in range(0,self.number_of_stages):
+                if self.boostback[i]:
+                    out_str+=f"Boostback Delta-v Achieved for stage {i+1}: {round(-self.Isps[i]*g*np.log(self.epsilon_boostback[i]), 2)} m/s\n"
+                    del_v_b+=-(self.Isps[i]*g*np.log(self.epsilon_boostback[i]))
+            out_str+=f"Total Delta-v Achieved: {round(self.delta_v_achieved+del_v_b, 2)} m/s\n"
         else:
-            print(f"Total Delta-v Achieved: {round(self.calculate_delta_v(), 2)} m/s")
-        print("===================================================================================")
-
-        return df
+            out_str+=f"Total Delta-v Achieved: {round(self.calculate_delta_v(), 2)} m/s\n"
+        out_str+="===================================================================================\n"
+        return out_str
 
     def create_rocket_object(self):
         for i in range(0,self.number_of_stages):
-            self.rocket.add_stage(self.step_masses[i]*(1-self.epsilons[i]),self.stage_masses[i],self.step_masses[i],self.Isps[i])
+            self.rocket.add_stage(self.step_masses[i]*(1-self.epsilons[i]),self.stage_masses[i],self.step_masses[i],self.Isps[i],self.step_masses[i]*(1-self.epsilons_ascent[i]))
 
 
     def create_rocket_json(self, filename):

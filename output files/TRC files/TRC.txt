@@ -1,13 +1,14 @@
-********************************************************************************** TRC **********************************************************************************
+**********************************************************************************TRC**********************************************************************************
 ---Input Parameters---
+rocket name : TRC
 target orbit : 500
-average isp : 300
+average isp : 360
 thrust by weight : [1.9, 0.8]
 number of stages : 2
 isps : [350, 380]
-structural factors : [0.035, 0.035]
-payload : 80000.0
-Boostback : True
+structural factors : [0.07499999999999966, 0.08579999999999974]
+payload : 70000.0
+Boostback : [True, False]
 step diameters : [6, 6]
 fuel density : 820
 oxidiser density : 1141
@@ -15,48 +16,48 @@ tank diameters : 5.5
 o/f : 2.6
 engine height : 3.1
 engine thrust : [2800000.0, 3285000.0]
+stuctural factors : [0.07499999999999966, 0.08579999999999974]
 
 ###################################   DELTA-V BREAKDOWN   ##############################
 
-|                          |   Delta-v (m/s) |
-|:-------------------------|----------------:|
-| Required Delta-v (m/s)   |        10230.8  |
-| Initial Velocity (m/s)   |          405.22 |
-| Orbital Velocity (m/s)   |         7901.32 |
-| Gravitational Loss (m/s) |         1484.7  |
-| Drag Loss (m/s)          |           50    |
-| Boostback Delta-v (m/s)  |         1200    |
+|                                     |   Delta-v (m/s) |
+|:------------------------------------|----------------:|
+| Required Delta-v (m/s)              |        10908.1  |
+| Initial Velocity (m/s)              |          405.22 |
+| Orbital Velocity (m/s)              |         7901.32 |
+| Gravitational Loss (m/s)            |         1862    |
+| Drag Loss (m/s)                     |           50    |
+| Boostback Delta-v for stage 1 (m/s) |         1500    |
 
 ################################# ROCKET MASS & Delta-v BREAKDOWN ###################################
 
 =====================================================================================
 |                              |                1 |      2 |
 |:-----------------------------|-----------------:|-------:|
-| Step Total Mass (kg)         | 951359           | 234555 |
-| Step Structural Mass (kg)    |  33297           |   8209 |
-| Step Propellant Mass (kg)    | 918061           | 226346 |
-| Fuel Mass for Ascent (kg)    | 904114           | 226346 |
-| Fuel Mass for Boostback (kg) |  13947           |      0 |
-| Delta-v Ascent (m/s)         |   4295           |   4734 |
-| Delta-v Boostback (m/s)      |   1200           |      0 |
-| Stage Total Mass (kg)        |      1.18592e+06 | 234556 |
+| Step Total Mass (kg)         |      1.53013e+06 | 355302 |
+| Step Structural Mass (kg)    | 114759           |  30484 |
+| Step Propellant Mass (kg)    |      1.41537e+06 | 324817 |
+| Fuel Mass for Ascent (kg)    |      1.35242e+06 | 324817 |
+| Fuel Mass for Boostback (kg) |  62951           |      0 |
+| Delta-v Ascent (m/s)         |   4035           |   5372 |
+| Delta-v Boostback (m/s)      |   1499           |      0 |
+| Stage Total Mass (kg)        |      1.88543e+06 | 355302 |
 
 ===================================================================================
-Delta-v Achieved (excluding boostback): 9030.8 m/s
-Boostback Delta-v Achieved: 1200.0 m/s
-Total Delta-v Achieved: 10230.8 m/s
+Delta-v Achieved (excluding boostback): 9408.1 m/s
+Boostback Delta-v Achieved for stage 1: 1500.0 m/s
+Total Delta-v Achieved: 10908.1 m/s
 ===================================================================================
 
 ###################################   ROCKET DIMENSIONS   ##############################
 
 |    | Stage   |   Fuel Mass (kg) |   Oxidiser Mass (kg) |   Fuel Tank Height (m) |   Oxidiser Tank Height (m) |   Intertank Height (m) |   Engine Count |   Total Stage Height (m) |
 |---:|:--------|-----------------:|---------------------:|-----------------------:|---------------------------:|-----------------------:|---------------:|-------------------------:|
-|  0 | Stage 1 |           255017 |               663045 |                  14.92 |                      26.29 |                      0 |              8 |                    44.32 |
-|  1 | Stage 2 |            62874 |               163472 |                   5.06 |                       7.86 |                      0 |              1 |                    16.02 |
+|  0 | Stage 1 |           393158 |          1.02221e+06 |                  22.01 |                      39.54 |                      0 |             13 |                    64.66 |
+|  1 | Stage 2 |            90227 |     234590           |                   6.46 |                      10.49 |                      0 |              1 |                    20.05 |
 
-Total Rocket Height: 62.34 m
+Total Rocket Height: 86.71 m
 Note that the total rocket height does not include the height of the payload fairing
+Updated structural factors are [0.07499999999999966, 0.08579999999999974]
 ********************************************************************************************************************************
-Stage 1 burnout at 111.65 km at 2.41 minutes
-Stage 2 burnout at 327.78 km at 8.11 minutes
-Note that the burnout altitudes are not very accurate as they depend on the actual ascent trajectory which is not yet fixed
+

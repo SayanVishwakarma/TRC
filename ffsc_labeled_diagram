@@ -1,0 +1,48 @@
+// Full-Flow Staged Combustion Cycle (LCH₄/LOX)
+digraph {
+	nodesep=0.8 rankdir=LR
+	node [color=lightgray fontname=Helvetica shape=box style=filled]
+	LCH4_Tank [label="LCH₄ Tank
+(0.4 MPa)" color=lightblue]
+	LOX_Tank [label="LOX Tank
+(0.4 MPa)" color=lightblue]
+	MFV [label="MFV
+(Main Fuel Valve)" color=white]
+	FPOV [label="FPOV
+(Final Preburner Ox Valve)" color=white]
+	OPFV [label="OPFV
+(Ox Preburner Fuel Valve)" color=white]
+	Fuel_Pump [label="Fuel Pump (FP)
+88.6 MPa" color=orange]
+	Ox_Pump [label="Ox Pump (OP)
+69.6 MPa" color=lightblue]
+	FPB [label="Fuel-rich Preburner (FPB)
+1860 K
+149 kg/s" color=salmon]
+	OPB [label="Oxygen-rich Preburner (OPB)
+760 K
+536 kg/s" color=skyblue]
+	Fuel_Turbine [label="Fuel Turbine (FT)
+37 MW
+149 kg/s" color=salmon]
+	Ox_Turbine [label="Ox Turbine (OT)
+31 MW
+536 kg/s" color=skyblue]
+	Chamber [label="Combustion Chamber
+30 MPa" color=lightcoral]
+	Nozzle [label=Nozzle color=white]
+	LCH4_Tank -> MFV [label="0.4 MPa"]
+	MFV -> Fuel_Pump [label="149 kg/s"]
+	Fuel_Pump -> FPB [label="88.6 MPa"]
+	FPB -> Fuel_Turbine [label="149 kg/s"]
+	Fuel_Turbine -> Chamber
+	Fuel_Pump -> OPFV [label="34.2 MPa
+149 kg/s"]
+	OPFV -> OPB
+	LOX_Tank -> FPOV [label="0.4 MPa"]
+	FPOV -> Ox_Pump [label="536 kg/s"]
+	Ox_Pump -> OPB [label="69.6 MPa"]
+	OPB -> Ox_Turbine [label="536 kg/s"]
+	Ox_Turbine -> Chamber
+	Chamber -> Nozzle
+}

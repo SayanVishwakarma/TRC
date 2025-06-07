@@ -1,5 +1,4 @@
 from __init__ import *
-
 # -----------------------------------------------
 # Class: delta_v
 # Purpose: Calculates total delta-v required to reach orbit,
@@ -40,7 +39,6 @@ class delta_v:
             self.rocket_mass -= m_dot * dt
             self.flight_time += dt
             if self.rocket_mass < 0:
-                print("Insufficient Fuel")
                 break
 
     def calculate_gravitation_delta_v(self):
@@ -50,16 +48,22 @@ class delta_v:
         self.drag_delta_v = 50.0  # Placeholder for drag model
 
     def calculate_boostback_delta_v(self):
-        self.boostback_delta_v = 1200.0  # Placeholder boostback cost
+        self.boostback_delta_v = [1500.0,2000.0]  # Placeholder boostback cost
 
     def calculate_total_delta_v(self):
         # Add losses and orbital requirement
         self.total_delta_v = -self.initial_velocity + self.gravitational_delta_v + self.orbit_velocity + self.drag_delta_v
 
     def display_breakdown(self, as_table=True):
-        print("\n###################################   DELTA-V BREAKDOWN   ##############################\n")
-        required_delta_v = round(self.total_delta_v + self.boostback_delta_v, 2) if self.boostback else round(self.total_delta_v, 2)
-
+        out_str="\n###################################   DELTA-V BREAKDOWN   ##############################\n\n"
+        #("\n###################################   DELTA-V BREAKDOWN   ##############################\n")
+        #required_delta_v = round(self.total_delta_v + np.sum(self.boostback_delta_v), 2) if self.boostback else round(self.total_delta_v, 2)
+        required_delta_v = self.total_delta_v
+        q=0
+        for a in self.boostback:
+            if a:
+                required_delta_v+=self.boostback_delta_v[q]
+            q+=1
         delta_v_items = {
             "Required Delta-v (m/s)": required_delta_v,
             "Initial Velocity (m/s)": round(self.initial_velocity, 2),
@@ -67,18 +71,21 @@ class delta_v:
             "Gravitational Loss (m/s)": round(self.gravitational_delta_v, 2),
             "Drag Loss (m/s)": round(self.drag_delta_v, 2),
         }
-
-        if self.boostback:
-            delta_v_items["Boostback Delta-v (m/s)"] = round(self.boostback_delta_v, 2)
-
+        q=1
+        for a in self.boostback:
+            if a:
+                delta_v_items[f"Boostback Delta-v for stage {q} (m/s)"] = round(self.boostback_delta_v[q-1], 2)
+            q+=1
         if not as_table:
             for key, value in delta_v_items.items():
-                print(f"{key} = {value}")
+                out_str+=f"{key} = {value}"
+                #print(f"{key} = {value}")
         else:
             import pandas as pd
             df = pd.DataFrame.from_dict(delta_v_items, orient='index', columns=["Delta-v (m/s)"])
-            print(df.to_markdown())
-        return delta_v_items
+            out_str+=df.to_markdown()+"\n"
+            #print(df.to_markdown())
+        return out_str
 
 # -----------------------------------------------
 # Class: delta_v_2

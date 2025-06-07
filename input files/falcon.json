@@ -1,4 +1,5 @@
 {
+    "rocket name":"falcon",
     "target orbit":300,
     "average isp":300,
     "thrust by weight":[1.55,0.56],

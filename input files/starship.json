@@ -1,0 +1,19 @@
+{
+    "rocket name":"starship",
+    "target orbit":500,
+    "average isp":360,
+    "thrust by weight":[1.9,1.4],
+    "number of stages":2,
+    "isps":[350,380],
+    "structural factors":[0.0461, 0.101 ],
+    "modify factors":true,
+    "payload":150e3,
+    "Boostback":[true,true],
+    "step diameters":[9,9],
+    "fuel density":820,
+    "oxidiser density":1141,
+    "tank diameters":8.5,
+    "o/f":2.6,
+    "engine height":3.1,
+    "engine thrust":[280e4,3285e3]
+}

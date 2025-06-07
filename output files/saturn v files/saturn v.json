@@ -1,0 +1,32 @@
+{
+    "rocket_mass_breakdown": {
+        "step_total_mass": [
+            1400276.0,
+            108497.0,
+            33073.0
+        ],
+        "step_structural_mass": [
+            79816.0,
+            8788.0,
+            3605.0
+        ],
+        "step_propellant_mass": [
+            1320460.0,
+            99709.0,
+            29468.0
+        ],
+        "stage_total_mass": [
+            1541846.0,
+            141570.0,
+            33073.0
+        ]
+    },
+    "delta_v": {
+        "step_delta_v": [
+            4560.0,
+            3032.0,
+            1807.0
+        ],
+        "delta_v_achieved": 9399.48
+    }
+}
