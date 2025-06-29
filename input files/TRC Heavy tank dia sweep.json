@@ -2,7 +2,7 @@
     "rocket name":"TRC Heavy sweep",
     "target orbit":500,
     "average isp":360,
-    "thrust by weight":[1.9,1.4],
+    "thrust by weight":[1.4,1],
     "number of stages":2,
     "isps":[350,380],
     "structural factors":[0.0461, 0.101 ],

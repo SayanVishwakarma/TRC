@@ -1,4 +1,6 @@
 {
+    "m_z":750,
+    "A_t":0.045,
     "oxidiser by fuel":3.6,
 
     "fuel tank pressure":4e5,
@@ -11,11 +13,5 @@
     "fuel pump efficiency":0.83,
     "oxidiser pump efficiency":0.96,
     
-    "fuel rich preburner pressure": 61e5,
-
-    "R_pbf":0.25,
-    "R_pbo":50,
-
-    "thrust":280e4,
-    "p_c":300e5
+    "fuel rich preburner pressure":61.1e6
 }

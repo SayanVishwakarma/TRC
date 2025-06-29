@@ -1,0 +1,55 @@
+***********************************************  main ENGINE  ***********************************************
+
+--- INPUT PARAMETERS ---
+
+m_z = 750
+A_t = 0.045
+oxidiser by fuel = 3.6
+fuel tank pressure = 400000.0
+oxidiser tank pressure = 400000.0
+fuel density = 420
+oxidiser density = 1140
+fuel rich turbine efficiency = 0.43
+oxidiser rich turbine efficiency = 0.35
+fuel pump efficiency = 0.83
+oxidiser pump efficiency = 0.96
+fuel rich preburner pressure = 61100000.0
+
+--- OUTPUT PARAMETERS ---
+
+Exit Diameter (D_E) = 1.284 m
+Isp (Isp) = 325.84 s
+Thrust (Thrust) = 2394.92 kN
+chamber pressure (p_c) = 303.03 bar
+fuel flow rate (m_f) = 163.04 kg/s
+oxidiser flow rate (m_o) = 586.96 kg/s
+fuel-rich turbine gas flow rate (m_tf) = 179.29 kg/s
+oxidiser-rich turbine gas flow rate (m_to) = 570.71 kg/s
+fuel flow rate of the fuel-rich preburner (m_ff) = 153.35 kg/s
+oxidiser flow rate of the fuel-rich preburner (m_fo) = 25.93 kg/s
+fuel flow rate of the oxidiser-rich preburner (m_of) = 9.69 kg/s
+oxidiser flow rate of the oxidiser-rich preburner (m_oo) = 561.02 kg/s
+outlet pressure of the fuel pump (p_f2) = 887.45 bar
+outlet pressure of the oxidizer pump (p_o2) = 696.54 bar
+inlet pressure of the fuel-rich turbine (p_f3) = 611.0 bar
+inlet pressure of the oxidizer-rich turbine (p_o3) = 611.0 bar
+outlet pressure of the fuel-rich turbine (p_f4) = 345.45 bar
+outlet pressure of the oxidizer-rich turbine (p_o4) = 433.33 bar
+fuel-rich turbine pressure ratio (pi_tf) =1.769
+oxidizer-rich turbine pressure ratio (pi_to) =1.41
+fuel pump head (delta_p_f) = 883.45 bar
+oxidiser pump head (delta_p_o) = 692.54 bar
+fuel turbopump power (P_f) = 52.76 MW
+oxidiser turbopump power (P_o) = 54.86 MW
+fuel-rich turbine power (g_f) = 52.76 MW
+oxidiser-rich turbine power (g_o) = 54.86 MW
+gamma in fuel rich preburner (gamma_pbf) =1.178
+gamma in oxidiser rich preburner (gamma_pbo) =1.324
+molecular weight in fuel rich preburner (M_pbf) =17.18
+molecular weight in oxidiser rich preburner (M_pbo) =31.514
+temperature in fuel rich preburner (T_pbf) =671.253
+temperature in oxidiser rich preburner (T_pbo) =669.739
+fuel rich preburner O/F (R_pbf) =0.169
+oxidiser rich preburner O/F (R_pbo) =57.882
+
+--- MAX RESIDUAL = 0.0% ---

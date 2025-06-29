@@ -6,14 +6,14 @@ average isp : 360
 thrust by weight : [1.4, 1]
 number of stages : 2
 isps : [350, 380]
-structural factors : [0.05   0.1743]
+structural factors : [0.0449 0.2512]
 modify factors : True
 payload : 50000.0
 Boostback : [True, True]
-step diameters : [7.75, 7.75]
+step diameters : [8.75, 8.75]
 fuel density : 820
 oxidiser density : 1141
-tank diameters : 7.25
+tank diameters : 8.25
 o/f : 2.6
 engine height : 3.1
 engine thrust : [2171390.0, 2600390.0]
@@ -35,14 +35,14 @@ engine thrust : [2171390.0, 2600390.0]
 =====================================================================================
 |                              |                1 |      2 |
 |:-----------------------------|-----------------:|-------:|
-| Step Total Mass (kg)         |      3.91756e+06 | 155259 |
-| Step Structural Mass (kg)    | 195877           |  27061 |
-| Step Propellant Mass (kg)    |      3.72168e+06 | 128197 |
-| Fuel Mass for Ascent (kg)    |      3.61423e+06 | 108957 |
-| Fuel Mass for Boostback (kg) | 107448           |  19239 |
-| Delta-v Ascent (m/s)         |   7177           |   2818 |
+| Step Total Mass (kg)         |      6.02784e+06 | 129960 |
+| Step Structural Mass (kg)    | 270650           |  32646 |
+| Step Propellant Mass (kg)    |      5.75719e+06 |  97314 |
+| Fuel Mass for Ascent (kg)    |      5.60873e+06 |  74104 |
+| Fuel Mass for Boostback (kg) | 148464           |  23210 |
+| Delta-v Ascent (m/s)         |   8019           |   1976 |
 | Delta-v Boostback (m/s)      |   1499           |   1842 |
-| Stage Total Mass (kg)        |      4.07282e+06 | 155259 |
+| Stage Total Mass (kg)        |      6.1578e+06  | 129960 |
 
 ===================================================================================
 Delta-v Achieved (excluding boostback): 9996.1 m/s
@@ -55,11 +55,11 @@ Total Delta-v Achieved: 13496.1 m/s
 
 |    | Stage   |   Fuel Mass (kg) |   Oxidiser Mass (kg) |   Fuel Tank Height (m) |   Oxidiser Tank Height (m) |   Intertank Height (m) |   Engine Count |   Total Stage Height (m) |
 |---:|:--------|-----------------:|---------------------:|-----------------------:|---------------------------:|-----------------------:|---------------:|-------------------------:|
-|  0 | Stage 1 |       1.0338e+06 |          2.68788e+06 |                  32.96 |                      59.48 |                      0 |             26 |                    95.54 |
-|  1 | Stage 2 |   35610.4        |      92587           |                   3.47 |                       4.38 |                      0 |              1 |                    10.95 |
+|  0 | Stage 1 |      1.59922e+06 |          4.15797e+06 |                  39.23 |                      70.92 |                      0 |             39 |                   113.25 |
+|  1 | Stage 2 |  27031.8         |      70282.6         |                   3.37 |                       3.9  |                      0 |              1 |                    10.37 |
 
-Total Rocket Height: 108.49 m
+Total Rocket Height: 125.62 m
 Note that the total rocket height does not include the height of the payload fairing
-Updated structural factors are [0.05   0.1743]
+Updated structural factors are [0.0449 0.2512]
 ********************************************************************************************************************************
 

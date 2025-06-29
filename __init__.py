@@ -11,7 +11,7 @@ import sys
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.optimize import fsolve, minimize, differential_evolution, root
+from scipy.optimize import fsolve, minimize, differential_evolution, root, root_scalar
 import math
 import json
 import pandas as pd

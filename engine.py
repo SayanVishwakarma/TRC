@@ -1,6 +1,6 @@
 from __init__ import *
 class engine:
-    def __init__(self,engine_name):
+    def __init__(self,engine_name,override_inputs=True):
         self.engine_name=engine_name
         self.input_file="input files/engines/"+engine_name+".json"
         self.output_file="output files/engines/"+engine_name+".txt"
@@ -8,7 +8,9 @@ class engine:
             self.data = json.load(file)
         self.read_fuel_data()
 
-        self.R_pb=[1,1]
+        if override_inputs:
+            self.override_inputs()
+        self.R_pb=[0.1,10]
         self.R_pbf=1
         self.R_pbo=1
         self.R=self.data["oxidiser by fuel"]
@@ -23,6 +25,7 @@ class engine:
         self.eta_to=self.data["oxidiser rich turbine efficiency"]
         self.eta_pf=self.data["fuel pump efficiency"]
         self.eta_po=self.data["oxidiser pump efficiency"]
+        
         self.rho_o=self.data["oxidiser density"]
         self.rho_f=self.data["fuel density"]
         self.p_pbf=self.data["fuel rich preburner pressure"]
@@ -50,8 +53,11 @@ class engine:
 
         self.max_residual=0
 
-        self.symbols = ["Isp", "Thrust", "p_c", "m_f", "m_o", "m_tf", "m_to", "m_ff", "m_fo", "m_of", "m_oo", "p_f2", "p_o2", "p_f3", "p_o3", "p_f4", "p_o4", "pi_tf", "pi_to", "delta_p_f", "delta_p_o", "P_f", "P_o", "g_f", "g_o", "gamma_pbf", "gamma_pbo", "M_pbf", "M_pbo", "T_pbf", "T_pbo", "R_pbf", "R_pbo"]
+        self.symbols = ["D_E", "Isp", "Thrust", "p_c", "m_f", "m_o", "m_tf", "m_to", "m_ff", "m_fo", "m_of", "m_oo", "p_f2", "p_o2", "p_f3", "p_o3", "p_f4", "p_o4", "pi_tf", "pi_to", "delta_p_f", "delta_p_o", "P_f", "P_o", "g_f", "g_o", "gamma_pbf", "gamma_pbo", "M_pbf", "M_pbo", "T_pbf", "T_pbo", "R_pbf", "R_pbo"]
 
+    def override_inputs(self):
+        self.data["m_z"]=self.data["Thrust"]/self.isp(self.data["oxidiser by fuel"])
+        self.data["A_t"]=self.data["m_z"]*self.cstar(self.data["oxidiser by fuel"])/self.data["p_c"]
 
     
     def read_fuel_data(self):
@@ -117,6 +123,42 @@ class engine:
             if ratios[i]<=R:
                 return self.R_0/((ans[i+1]-ans[i])/(ratios[i+1]-ratios[i])*(R-ratios[i])+ans[i])
         return self.R_0/ans[len(ratios)-1]
+    
+    def exit_diameter(self):
+
+        p_p0=1e5/self.p_c
+        gamma=self.gamma(self.R)
+        # Define the isentropic pressure ratio function
+        def pressure_ratio(M):
+            return (1 + 0.5*(gamma -1)*M**2)**(-gamma/(gamma -1))
+
+        # Define function whose root we want: pressure_ratio(M) - p_p0 = 0
+        def f(M):
+            return pressure_ratio(M) - p_p0
+
+        # Solve for subsonic Mach (M < 1)
+        #sol_sub = root_scalar(f, bracket=[1e-5, 1])
+        #if not sol_sub.converged:
+        #    raise ValueError("Subsonic Mach solving failed")
+        #M_sub = sol_sub.root
+
+        # Solve for supersonic Mach (M >1)
+        sol_sup = root_scalar(f, bracket=[1.0001, 20])
+        if not sol_sup.converged:
+            raise ValueError("Supersonic Mach solving failed")
+        M_sup = sol_sup.root
+
+        # Area-Mach relation
+        def area_ratio(M):
+            return (1/M) * ( (2/(gamma+1)*(1 + 0.5*(gamma-1)*M**2)) ) ** ( (gamma+1)/(2*(gamma-1)) )
+
+        #A_Astar_sub = area_ratio(M_sub)
+        A_Astar_sup = area_ratio(M_sup)
+        A_e=A_Astar_sup*self.A_t
+        d_e=(A_e/pi)**0.5*2
+        return d_e
+
+
     '''
     def c_star(self):
         #self.c_star=((self.data['R_c']*self.data['T_c']/self.data['gamma_c'])**0.5)/(2/(self.data['gamma_c']+1))**((self.data['gamma_c']+1)/2/(self.data['gamma_c']-1))
@@ -173,15 +215,19 @@ class engine:
         return (-c1*R_pbf/(1+R_pbf)+self.R*w_f)/(-c1/(1+R_pbf)+w_f)
     
     def objective_function(self,x):
-        eqs=[]
-        eqs.append(x[0]-self.Gf(x[0]))
-        eqs.append(x[1]-self.Gf(x[1]))
-        return eqs    
+        self.R_pbf=x[0]
+        self.R_pbo=x[1]
+        errs=self.calculate_all_parameters(finding_eq=True,print_residuals=False)
+        return errs    
     
     def inner_convergence2(self):
         x=self.R_pb
         ans=root(self.objective_function,x)
-        print(ans.x)
+        print(f"Equilibrium Ratios are {ans.x}")
+        self.R_pb=ans.x
+        self.R_pbf=ans.x[0]
+        self.R_pbo=ans.x[1]
+
 
     def inner_convergence(self):
         while True:
@@ -200,11 +246,13 @@ class engine:
             self.R_pb=[self.R_pbf,self.R_pbo]
             #print(self.R_pb,np.linalg.norm(delta_R_pb/self.R_pb))
         #print(self.R_pbf,self.R_pbo)
-        self.R_pbf=0.25
-        self.R_pbo=50
+        self.R_pbf=0.17
+        self.R_pbo=58
 
-    def calculate_all_parameters(self,check_residuals=True):
+    def calculate_all_parameters(self,check_residuals=True,finding_eq=False,print_residuals=False):
+        self.max_residual=0
         self.parameters={}
+        self.parameters["Exit Diameter"]=self.exit_diameter()#((self.A_t*29.5)/np.pi)**0.5*2
         self.parameters["Isp"]=Isp=self.isp(self.R)
         self.parameters["Thrust"]=Thrust=self.m_z*self.parameters["Isp"]
         self.parameters["chamber pressure"]=p_c=self.m_z*self.cstar(self.R)/self.A_t
@@ -325,26 +373,47 @@ class engine:
 
             #eqs.append((delta_p_f-(R_pbo-self.R)*(1+R_pbf)/(R_pbo-R_pbf)*(self.eta_tf*self.rho_f*self.eta_pf)*(self.gamma_pbf/(self.gamma_pbf-1))*(self.R_0/self.M_pbf)*self.T_pbf*(1-(1/pi_tf)**(self.gamma_pbf-1/self.gamma_pbf)))/a)
             #eqs.append((delta_p_o-(self.R-R_pbf)*(1+R_pbf)/(R_pbo-R_pbf)*(self.eta_to*self.rho_o*self.eta_po)*(self.gamma_pbo/(self.gamma_pbo-1))*(self.R_0/self.M_pbo)*self.T_pbo*(1-(1/pi_to)**(self.gamma_pbo-1/self.gamma_pbo)))/a)
-            print("Residuals:")
+            if print_residuals:
+                print("Residuals:")
 
             for i in range(0,len(eqs)):
-                #if eqs[i]>1:
-                    print(f"{i+1} : {round(eqs[i]/eqs2[i],3)}%")
-                    if (eqs[i]/eqs2[i])>self.max_residual:
-                        self.max_residual=(eqs[i]/eqs2[i])
+                if print_residuals:
+                    print(f"{i+1} : {round(eqs[i]/eqs2[i]*100,3)}%")
+                if np.abs((eqs[i]/eqs2[i]))>self.max_residual:
+                    self.max_residual=np.abs((eqs[i]/eqs2[i]))*100
+        
+        if finding_eq:
+            return eqs[31]/eqs2[31],eqs[32]/eqs2[32]
 
     def get_output(self,print_residual=True):
         sys.stdout = open(self.output_file, 'w')
         print(f"***********************************************  {self.engine_name} ENGINE  ***********************************************")
         print()
-        print(f"--- INPUT PARAMETERS ---")
+        print(f"--- INPUT PARAMETERS ---\n")
+        """
+        df=pd.DataFrame.from_dict(self.data,orient="index")
+        print(df.to_markdown())
+        """
+        #print("="*70)
         for key in self.data.keys():
-            print(f"{key} = {self.data[key]}")
-        print()
-        print("--- OUTPUT PARAMETERS ---")
-        i=0
-        for key in self.parameters.keys():
             if ("pressure" in key and not("ratio" in key)) or "head" in key:
+                print(f"{key} = {round(self.data[key]/1e5,2)} bar")
+            elif "m_z" in key:
+                print(f"{key} = {round(self.data[key],2)} kg/s")
+            elif "A_t" in key:
+                print(f"{key} = {round(self.data[key],4)} m^2")
+            elif not("Thrust" in key or "p_c" in key):
+                print(f"{key} = {self.data[key]}")
+            #if not("Thrust" in key or "p_c" in key):
+                #print("="*70)
+        print()
+        print("--- OUTPUT PARAMETERS ---\n")
+        i=0
+        #print("="*70)
+        for key in self.parameters.keys():
+            if "Exit Diameter" in key:
+                print(f"{key} ({self.symbols[i]}) = {round(self.parameters[key],3)} m")
+            elif ("pressure" in key and not("ratio" in key)) or "head" in key:
                 print(f"{key} ({self.symbols[i]}) = {round(self.parameters[key]/1e5,2)} bar")
             elif "Isp" in key:
                 print(f"{key} ({self.symbols[i]}) = {round(self.parameters[key]/g,2)} s")
@@ -354,9 +423,12 @@ class engine:
                 print(f"{key} ({self.symbols[i]}) = {round(self.parameters[key],2)} kg/s")
             elif "power" in key:
                 print(f"{key} ({self.symbols[i]}) = {round(self.parameters[key]/1e6,2)} MW")
+            elif "temperature" in key:
+                print(f"{key} ({self.symbols[i]}) = {round(self.parameters[key],2)} K")
             else:
-                print(f"{key} ({self.symbols[i]}) ={round(self.parameters[key],2)}")
+                print(f"{key} ({self.symbols[i]}) ={round(self.parameters[key],3)}")
             i+=1
+            ##print("="*70)
 
         if print_residual:
             print()
@@ -365,9 +437,9 @@ class engine:
         sys.stdout = sys.__stdout__
 
 
-eng=engine("eng1")
-eng.inner_convergence()
-eng.calculate_all_parameters()
+eng=engine("2400kn")
+eng.inner_convergence2()
+eng.calculate_all_parameters(print_residuals=True)
 eng.get_output()
 #print(eng.c_star())
-#print(eng.cstar(eng.R))
+#print(eng.cstar(eng.R))3
