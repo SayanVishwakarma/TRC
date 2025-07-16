@@ -437,7 +437,7 @@ class engine:
         sys.stdout = sys.__stdout__
 
 
-eng=engine("2400kn")
+eng=engine("2400kn 3")
 eng.inner_convergence2()
 eng.calculate_all_parameters(print_residuals=True)
 eng.get_output()

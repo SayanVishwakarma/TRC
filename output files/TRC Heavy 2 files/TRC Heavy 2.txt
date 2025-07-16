@@ -1,0 +1,85 @@
+**********************************************************************************TRC Heavy 2**********************************************************************************
+---Input Parameters---
+rocket name : TRC Heavy 2
+target orbit : 500
+average isp : 360
+thrust by weight : [1.9, 1.4]
+number of stages : 2
+isps : [350, 380]
+structural factors : [0.0588, 0.1557]
+modify factors : True
+payload : 70000.0
+Boostback : [True, True]
+step diameters : [8, 8]
+fuel density : 420
+oxidiser density : 1141
+tank diameters : 7.5
+o/f : 2.6
+engine height : 3.1
+engine thrust : [2800000.0, 3285000.0]
+updated structural factors : [0.0588, 0.1557]
+
+###################################   DELTA-V BREAKDOWN   ##############################
+
+|                                     |   Delta-v (m/s) |
+|:------------------------------------|----------------:|
+| Required Delta-v (m/s)              |        12908.1  |
+| Initial Velocity (m/s)              |          405.22 |
+| Orbital Velocity (m/s)              |         7901.32 |
+| Gravitational Loss (m/s)            |         1862    |
+| Drag Loss (m/s)                     |           50    |
+| Boostback Delta-v for stage 1 (m/s) |         1500    |
+| Boostback Delta-v for stage 2 (m/s) |         2000    |
+
+################################# ROCKET MASS & Delta-v BREAKDOWN ###################################
+
+=====================================================================================
+|                              |                1 |      2 |
+|:-----------------------------|-----------------:|-------:|
+| Step Total Mass (kg)         |      3.79996e+06 | 214486 |
+| Step Structural Mass (kg)    | 223437           |  33395 |
+| Step Propellant Mass (kg)    |      3.57652e+06 | 181091 |
+| Fuel Mass for Ascent (kg)    |      3.45395e+06 | 157348 |
+| Fuel Mass for Boostback (kg) | 122566           |  23743 |
+| Delta-v Ascent (m/s)         |   6408           |   2999 |
+| Delta-v Boostback (m/s)      |   1499           |   1842 |
+| Stage Total Mass (kg)        |      4.01445e+06 | 214487 |
+
+===================================================================================
+Delta-v Achieved (excluding boostback): 9408.1 m/s
+Boostback Delta-v Achieved for stage 1: 1500.0 m/s
+Boostback Delta-v Achieved for stage 2: 2000.0 m/s
+Total Delta-v Achieved: 12908.1 m/s
+===================================================================================
+
+###################################   ROCKET DIMENSIONS   ##############################
+
+|    | Stage   |   Fuel Mass (kg) |   Oxidiser Mass (kg) |   Fuel Tank Height (m) |   Oxidiser Tank Height (m) |   Intertank Height (m) |   Engine Count |   Total Stage Height (m) |
+|---:|:--------|-----------------:|---------------------:|-----------------------:|---------------------------:|-----------------------:|---------------:|-------------------------:|
+|  0 | Stage 1 |         993478   |          2.58304e+06 |                  56.04 |                      53.74 |                      0 |             27 |                   112.89 |
+|  1 | Stage 2 |          50303.1 |     130788           |                   5.21 |                       5.09 |                      0 |              1 |                    13.41 |
+
+Total Rocket Height: 128.29 m
+Note that the total rocket height does not include the height of the payload fairing
+Updated structural factors are [0.0588 0.1557]
+********************************************************************************************************************************
+
+Rocket liftoff from [5572.2     0.   3088.72] km. Earth rotates along the Z-axis
+Stage 1 burnout:
+at 82.73 km at 3.17 minutes
+downrange position from launch site (in earth centered earth fixed frame) = [ 55.97 491.46  31.02] km
+velocity vector at burnout (in earth centered earth fixed frame) = [ 287.65 5555.48  159.45] m/s
+acceleration vector at burnout (in earth centered earth fixed frame) = [-0.06 37.32 -0.04] m/s^2
+direction vector at burnout (in earth centered earth fixed frame) = [0.2165 0.9689 0.12  ]
+delta-v achieved = 0 m/s
+
+Stage 2 burnout:
+at 238.01 km at 5.83 minutes
+downrange position from launch site (in earth centered earth fixed frame) = [  34.46 1608.03   19.1 ] km
+velocity vector at burnout (in earth centered earth fixed frame) = [-369.78 8440.06 -204.97] m/s
+acceleration vector at burnout (in earth centered earth fixed frame) = [-1.7  27.45 -0.94] m/s^2
+direction vector at burnout (in earth centered earth fixed frame) = [0.2165 0.9689 0.12  ]
+delta-v achieved = 0 m/s
+
+Note that the burnout altitudes are not very accurate as they depend on the actual ascent trajectory which is not yet fixed
+

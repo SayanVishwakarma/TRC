@@ -1,0 +1,20 @@
+{
+    "m_z":750,
+    "A_t":0.045,
+    "oxidiser by fuel":3.6,
+
+    "fuel tank pressure":4e5,
+    "oxidiser tank pressure":4e5,
+    "fuel density": 420,
+    "oxidiser density": 1140,
+
+    "fuel rich turbine efficiency":0.75,
+    "oxidiser rich turbine efficiency":0.75,
+    "fuel pump efficiency":0.75,
+    "oxidiser pump efficiency":0.75,
+    
+    "fuel rich preburner pressure":50e6,
+
+    "Thrust":2400e3,
+    "p_c":300e5
+}

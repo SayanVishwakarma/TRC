@@ -23,11 +23,12 @@ import pandas as pd
 import utils
 import time
 import copy
+from PIL import Image, ImageDraw, ImageFont
 #Defining some required constants
 g=9.8 #m/s^2
 R_earth=6371e3 #meter
 dt=10 #seconds
-total_time=5*60*60
+total_time=1*60*60
 latitude= 29 / 180 * np.pi #radians
 w_earth=2*np.pi/24/60/60 #rad/s
 

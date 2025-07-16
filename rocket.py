@@ -152,5 +152,5 @@ class rocket():
               'isp':self.Isps,
               'rocket name':self.data["rocket name"],
               'target orbit':self.data["target orbit"]}
-        return trajectory.trajectory2(data)
+        return trajectory.traj(data)
         

@@ -20,7 +20,8 @@ class evaluate:
         with open(input_path) as file:
             data = json.load(file)
 
-        
+        old_structural_factors=copy.deepcopy(data["structural factors"])
+
         out_str=""
         out_str+="**********************************************************************************"+ rocket_name+ "**********************************************************************************"
         out_str+="\n"
@@ -50,6 +51,10 @@ class evaluate:
 
 
         while data["modify factors"]:
+            for key,val in data.items():
+                if key=="updated structural factors":
+                    print(f"Updated structural factors already exist. Using them for calculations")
+                    data["structural factors"]=data["updated structural factors"]
             out_str=""
             out_str+="**********************************************************************************"+ rocket_name+ "**********************************************************************************"
             out_str+="\n"
@@ -84,7 +89,7 @@ class evaluate:
             print(f"Stage 1 mass off by {percent_error_1}%")
             print(f"Stage 2 mass off by {percent_error_2}%")    
             if percent_error_1<10 and percent_error_2<10:
-                print("Percent error in mass acceptable. Proceeding")
+                print("\nPercent error in mass acceptable. Proceeding")
                 print(f"Updated structural factors are {np.round(s_factors,4)}")
                 out_str+=f"Updated structural factors are {np.round(s_factors,4)}\n"
                 break
@@ -102,17 +107,33 @@ class evaluate:
                 s_factors[1]-=0.0001
                 print(f"Underestimated Stage 2 Structural Factor, updating it to {s_factors[1]}")
                 
-            data["structural factors"]=np.round(s_factors,4)
+        data["updated structural factors"]=[np.round(s_factors,4)[i] for i in range(0,len(np.round(s_factors,4)))]
+        data["structural factors"]=copy.deepcopy(old_structural_factors)
+        
+        with open(input_path, 'w') as file:
+            json.dump(data,file,indent=4)
+
         out_str+="********************************************************************************************************************************\n"
 
 
         traj=rocket.create_trajectory_object()
-        """
-        best_time,best_beta=trajectory.optimize_betas_2(traj.data,n_betas=50,n_ts=50,t1=6,t2=300,beta_max=1.5)
-        out_str+=traj.model(vector_end_time=best_time,beta_max=best_beta,total_time=3*60*60,post_burnout=False,)
         
-        out_str+=traj.model(beta_max=0,post_burnout=False)
-        """
+        '''
+        controls=[50,100,0.05]
+        vector_start_time,vector_end_time,beta_max=root(traj.optimize_controls,controls).x
+        traj.__init__(traj.data_copy)
+        print(f"\nPost optimisation outputs : {vector_start_time} s, {vector_end_time} s, {beta_max} rad")
+        print(f"\nPost optimisation loss : {traj.optimize_controls([vector_start_time,vector_end_time,beta_max],print_stats=True)}")
+        traj.__init__(traj.data_copy)
+        print("\nSimulating Trajectory")'''
+        start_time_array=np.linspace(10,150,3)
+        end_time_array=np.linspace(100,250,3)
+        beta_array=np.linspace(0.01,0.2,3)
+        traj.sweep_controls(start_time_array,end_time_array,beta_array)        
+        vector_start_time,vector_end_time,beta_max=[5,40,0.15]
+        traj.optimize_controls([vector_start_time,vector_end_time,beta_max],print_stats=True)
+        out_str+=traj.model(vector_start_time=vector_start_time,vector_end_time=vector_end_time,beta_max=beta_max,post_burnout=True)#beta_max=0,post_burnout=False)
+        
         
         # Redirect stdout to the output text file
         sys.stdout = open(output_path, 'w')
@@ -120,12 +141,13 @@ class evaluate:
         sys.stdout.close()
         sys.stdout = sys.__stdout__
 
-        print(f"Execution time taken : {time.time()-start_time} s")
+        print(f"\nExecution time taken : {time.time()-start_time} s")
         print(f"Results saved to {output_path}")
-        traj.model()
-        traj.plotter_both()
+        #traj.model()
+        traj.plot_altitudes()
+        traj.plotter()
         #traj.plotter_inertial_frame()
-        traj.plot_altitudes_inertial_frame()
+        
         
 
     def sweep(rocket_name):
@@ -287,20 +309,8 @@ class evaluate:
         df.to_excel(output_excel, index=False)
         print(f"Sweep complete. Results saved to {output_excel}")
     
-    sweep("TRC Heavy tank dia sweep")
+    main("TRC Heavy 2")
     #main("TRC Heavy")
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
