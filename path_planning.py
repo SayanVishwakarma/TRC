@@ -54,14 +54,17 @@ class path_planning:
         return np.dot(a,b)/np.linalg.norm(b)
 
 
-    def model(self,post_burnout=False,dt=dt,vector_start_time=10,vector_end_time=120,beta_max=0.2,total_time=total_time,optimising_controls=False):
-        
+    def model(self,post_burnout=False,dt=dt,vector_start_time=10,vector_end_time=120,beta_max=0.2,total_time=total_time,optimising_controls=False,thrust_cutoff=60*8):
+        self.__init__(thrust_by_weight=self.thrust_by_weight,isp=self.isp,targt_orbit=self.target_orbit)
         self.thrust_magnitude=self.thrust_by_weight*self.mass*g
 
         while (np.linalg.norm(self.position[-1])-R_earth-self.target_orbit)<0:
             if self.thrust_magnitude/self.mass/g>4:
                 self.thrust_by_weight=4
                 self.thrust_magnitude=self.thrust_by_weight*self.mass*g
+
+            if self.time[-1]>thrust_cutoff:
+                self.thrust_magnitude=0
             
             if self.time[-1]>=vector_start_time and self.time[-1]<=vector_end_time:
                 theta = beta_max
@@ -96,6 +99,11 @@ class path_planning:
             self.mass-=self.thrust_magnitude/self.isp/g*dt    
         
             self.time+=[self.time[-1]+dt]
+            if self.time[-1]>total_time:
+                if optimising_controls:
+                    return 1e3,1e6
+                else:
+                    return 1e6
             
         self.delta_v=self.isp*g*np.log(self.mass_initial/self.mass)    
             
@@ -175,47 +183,97 @@ class path_planning:
         plt.show()    
 
     
-    def sweep(self,start_time_array,end_time_array,beta_array):
+    def sweep(self,start_time_array,end_time_array,beta_array,thrust_cutoff_array):
         thrust_by_weight=self.thrust_by_weight*1
         isp=self.isp
         target_orbit=self.target_orbit
         angle_min=1e10
         orbital_velocity_difference_min=1e10
         prod_min=1e10
+        sum_min=1e10
         start_time_min=0
         end_time_min=0
         beta_min=0
+        thrust_cutoff_min=0
         num=0
-        loss=[]
+        lol=1
+        report_percentage=10
         for i in start_time_array:
             for j in end_time_array:
                 for k in beta_array:
-                    x,y=self.model(vector_start_time=i,vector_end_time=j,beta_max=k,optimising_controls=True)
-                    if prod_min>x*y:#x<angle_min and y<orbital_velocity_difference_min:
-                        start_time_min=i*1
-                        end_time_min=j*1
-                        beta_min=k*1
-                        angle_min=x
-                        orbital_velocity_difference_min=y
-                        prod_min=angle_min*orbital_velocity_difference_min
-                        print(x,y)
-                    loss+=[x*y]
-                    self.__init__(thrust_by_weight=thrust_by_weight,isp=isp,targt_orbit=target_orbit)
-                    num+=1
-                    print(f"{(int)(num/len(start_time_array)/len(end_time_array)/len(beta_array)*100)}% completed")
-        plt.figure()
-        plt.plot(loss)
-        plt.show()
-        return start_time_min,end_time_min,beta_min
+                    for l in thrust_cutoff_array:
+                        x,y=self.model(vector_start_time=i,vector_end_time=j,beta_max=k,thrust_cutoff=l,optimising_controls=True)
+                        if (np.abs(x)*np.abs(y))<prod_min:
+                            start_time_min=i*1
+                            end_time_min=j*1
+                            beta_min=k*1
+                            angle_min=x*1
+                            thrust_cutoff_min=l*1
+                            orbital_velocity_difference_min=y*1
+                            prod_min=angle_min*orbital_velocity_difference_min
+                            sum_min=np.abs(x)+np.abs(y)
+                            print(x,y)
+                        self.__init__(thrust_by_weight=thrust_by_weight,isp=isp,targt_orbit=target_orbit)
+                        num+=1
+                        if (int)(num/len(start_time_array)/len(end_time_array)/len(beta_array)/len(thrust_cutoff_array)*100)/report_percentage/lol==1:
+                            print(f"{(int)(num/len(start_time_array)/len(end_time_array)/len(beta_array)/len(thrust_cutoff_array)*100)}% completed")
+                            lol+=1
+        return start_time_min,end_time_min,beta_min,thrust_cutoff_min
+    
+    def epoch(self,start_time=25,end_time=200,beta=0.1,thrust_cutoff=5*60,n=5,delta_start_time=20,delta_end_time=150,delta_beta=0.09,delta_thrust_cutoff=3*60):
+        n_epoch=10
+        for i in range(0,n_epoch):
+            start_time_array=np.linspace(start_time-delta_start_time,start_time+delta_start_time,n)
+            end_time_array=np.linspace(end_time-delta_end_time,end_time+delta_end_time,n)
+            beta_array=np.linspace(beta-delta_beta,beta+delta_beta,n)
+            thrust_cutoff_array=np.linspace(thrust_cutoff-delta_thrust_cutoff,thrust_cutoff+delta_thrust_cutoff,n)
+            print(f"Commencing epoch number {i+1}")
+            time.sleep(1)
+            start_time,end_time,beta,thrust_cutoff=self.sweep(start_time_array=start_time_array,end_time_array=end_time_array,beta_array=beta_array,thrust_cutoff_array=thrust_cutoff_array)
+            delta_start_time=2*delta_start_time/n
+            delta_end_time=2*delta_end_time/n
+            delta_beta=2*delta_beta/n
+            delta_thrust_cutoff=2*delta_thrust_cutoff/n 
+            print(start_time,delta_start_time,end_time,delta_end_time,beta,delta_beta,thrust_cutoff,delta_thrust_cutoff)   
+        return start_time,end_time,beta,thrust_cutoff
+    
+    def objective_function(self,x):
+        start_time,end_time,beta,thrust_cutoff=x
+        return self.model(vector_start_time=start_time,vector_end_time=end_time,beta_max=beta,thrust_cutoff=thrust_cutoff)
+    
+    def constraint1(self,x):
+        start_time,end_time,beta,thrust_cutoff=x
+        self.model(vector_start_time=start_time,vector_end_time=end_time,beta_max=beta,thrust_cutoff=thrust_cutoff)
+        orbital_velocity_difference=((np.linalg.norm(self.velocity[-1])-(g*R_earth**2/np.linalg.norm(self.position[-1]))**0.5))
+        return 1000-orbital_velocity_difference
+    
+    def constraint2(self,x):
+        start_time,end_time,beta,thrust_cutoff=x
+        self.model(vector_start_time=start_time,vector_end_time=end_time,beta_max=beta,thrust_cutoff=thrust_cutoff)
+        angle=(np.dot(self.position[-1],self.velocity[-1])/np.linalg.norm(self.position[-1])/np.linalg.norm(self.velocity[-1]))/np.pi*180
+        return 100-angle
+    
+    def optimise(self):
+        x0=np.array([10,150,0.1,5*60])
+        bounds=((5,50),(50,300),(0.05,0.2),(3*60,8*60))
+        constraints=[ {'type':'ineq','fun':self.constraint1},{'type':'ineq','fun':self.constraint2}]
+        solution=minimize(self.objective_function,x0,method='SLSQP',bounds=bounds,constraints=constraints)
+        print(solution.success)
+        print(solution.x)
 
 obj=path_planning(1.3,500e3,330)
+obj.optimise()
+'''
 #print(obj.model(beta_max=0,dt=1))
 #obj.plot_altitudes()
-start_time_array=np.linspace(5,50,10)
-end_time_array=np.linspace(50,250,10)
-beta_array=np.linspace(-0.2,0.2,10)
-mins=obj.sweep(start_time_array=start_time_array,end_time_array=end_time_array,beta_array=beta_array)
-obj.model(vector_start_time=mins[0],vector_end_time=mins[1],beta_max=mins[2])
+start_time_array=np.linspace(5,50,20)
+end_time_array=np.linspace(50,250,20)
+beta_array=np.linspace(0,0.2,20)
+thrust_cutoff_array=np.linspace(3*60,8*60,20)
+#mins=obj.sweep(start_time_array=start_time_array,end_time_array=end_time_array,beta_array=beta_array,thrust_cutoff_array=thrust_cutoff_array)
+mins=obj.epoch()
+print("losses: ",obj.model(vector_start_time=mins[0],vector_end_time=mins[1],beta_max=mins[2],thrust_cutoff=mins[3],optimising_controls=True))
+print("Delta v: ",obj.model(vector_start_time=mins[0],vector_end_time=mins[1],beta_max=mins[2],thrust_cutoff=mins[3],dt=10,post_burnout=True,total_time=30*60))
 print(mins)
 obj.plot_altitudes()
-obj.plotter()
+obj.plotter()'''
