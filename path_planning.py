@@ -23,6 +23,7 @@ class path_planning:
         self.thrust_delta_v=0
         self.steering_loss=0
         self.delta_v=0
+        self.orbital_velocity_difference=0
 
     def rocket_inertia_tensor(self,mass, radius, length):
         I_xx = (1/12) * mass * (3 * radius**2 + length**2)
@@ -55,7 +56,7 @@ class path_planning:
 
 
     def model(self,post_burnout=False,dt=dt,vector_start_time=10,vector_end_time=120,beta_max=0.2,total_time=total_time,optimising_controls=False,thrust_cutoff=60*8):
-        self.__init__(thrust_by_weight=self.thrust_by_weight,isp=self.isp,targt_orbit=self.target_orbit)
+        #self.__init__(thrust_by_weight=self.thrust_by_weight,isp=self.isp,targt_orbit=self.target_orbit)
         self.thrust_magnitude=self.thrust_by_weight*self.mass*g
 
         while (np.linalg.norm(self.position[-1])-R_earth-self.target_orbit)<0:
@@ -82,7 +83,7 @@ class path_planning:
             R_b_to_i = self.quaternion_to_dcm(self.q)
             thrust_eci_frame = R_b_to_i @ thrust_body_frame
 
-            gravity_eci_frame=-g*self.normalize_quaternion(self.position[-1])
+            gravity_eci_frame=-g*(R_earth**2/np.linalg.norm(self.position[-1])**2)*self.normalize_quaternion(self.position[-1])
         
             self.gravity_delta_v+=self.get_component(gravity_eci_frame,self.velocity[-1])*dt
             self.thrust_delta_v+=self.get_component(thrust_eci_frame/self.mass,self.velocity[-1])*dt
@@ -113,9 +114,18 @@ class path_planning:
         
 
         if post_burnout:
+            print(np.dot(self.position[-1],self.velocity[-1])/np.linalg.norm(self.velocity[-1])/np.linalg.norm(self.position[-1])*180/pi)
+            print(np.arccos((self.velocity[-1])/np.linalg.norm(self.velocity[-1]))/pi*180)
+            print(np.linalg.norm(self.velocity[-1]))
+            #self.velocity[-1]*=((g*R_earth**2/np.linalg.norm(self.position[-1]))**0.5+600)/np.linalg.norm(self.velocity[-1])
+            self.velocity[-1]=np.cross(np.cross(self.position[-1],self.velocity[-1]),self.position[-1])*((g*R_earth**2/np.linalg.norm(self.position[-1]))**0.5)/np.linalg.norm(self.position[-1])**2/np.linalg.norm(self.velocity[-1])
+            print(np.dot(self.position[-1],self.velocity[-1])/np.linalg.norm(self.velocity[-1])/np.linalg.norm(self.position[-1])*180/pi)
+            print(np.arccos((self.velocity[-1])/np.linalg.norm(self.velocity[-1]))/pi*180)            
+            print(np.linalg.norm(self.velocity[-1]))
+            #rint(np.dot(self.position[-1],self.velocity[-1])/np.linalg.norm(self.velocity[-1])/np.linalg.norm(self.position[-1])*180/pi)
             while self.time[-1]<total_time:
 
-                gravity_eci_frame=-g*self.normalize_quaternion(self.position[-1])
+                gravity_eci_frame=-g*(R_earth**2/np.linalg.norm(self.position[-1])**2)*self.normalize_quaternion(self.position[-1])
                 
                 self.acceleration+=[gravity_eci_frame]
                 self.velocity+=[self.velocity[-1]+self.acceleration[-1]*dt]
@@ -125,7 +135,7 @@ class path_planning:
 
         angle=(np.dot(self.position[-1],self.velocity[-1])/np.linalg.norm(self.position[-1])/np.linalg.norm(self.velocity[-1]))/np.pi*180
         orbital_velocity_difference=((np.linalg.norm(self.velocity[-1])-(g*R_earth**2/np.linalg.norm(self.position[-1]))**0.5))
-
+        self.orbital_velocity_difference=orbital_velocity_difference
         if optimising_controls:
             return angle,orbital_velocity_difference
 
@@ -184,11 +194,13 @@ class path_planning:
 
     
     def sweep(self,start_time_array,end_time_array,beta_array,thrust_cutoff_array):
+        startingtime=time.time()
         thrust_by_weight=self.thrust_by_weight*1
         isp=self.isp
         target_orbit=self.target_orbit
         angle_min=1e10
         orbital_velocity_difference_min=1e10
+        total_delta_v=1e5
         prod_min=1e10
         sum_min=1e10
         start_time_min=0
@@ -197,31 +209,34 @@ class path_planning:
         thrust_cutoff_min=0
         num=0
         lol=1
-        report_percentage=10
+        report_percentage=25
         for i in start_time_array:
             for j in end_time_array:
                 for k in beta_array:
                     for l in thrust_cutoff_array:
                         x,y=self.model(vector_start_time=i,vector_end_time=j,beta_max=k,thrust_cutoff=l,optimising_controls=True)
-                        if (np.abs(x)*np.abs(y))<prod_min:
+                        z=self.delta_v+np.abs(self.orbital_velocity_difference)
+                        if x<angle_min:#(np.abs(x)**2*np.abs(y))<prod_min:
                             start_time_min=i*1
                             end_time_min=j*1
                             beta_min=k*1
-                            angle_min=x*1
                             thrust_cutoff_min=l*1
-                            orbital_velocity_difference_min=y*1
-                            prod_min=angle_min*orbital_velocity_difference_min
+                            angle_min=np.abs(x*1)
+                            orbital_velocity_difference_min=np.abs(y*1)
+                            prod_min=angle_min**2*orbital_velocity_difference_min
                             sum_min=np.abs(x)+np.abs(y)
-                            print(x,y)
+                            total_delta_v=z
+                            print(x,y,z)
                         self.__init__(thrust_by_weight=thrust_by_weight,isp=isp,targt_orbit=target_orbit)
                         num+=1
-                        if (int)(num/len(start_time_array)/len(end_time_array)/len(beta_array)/len(thrust_cutoff_array)*100)/report_percentage/lol==1:
-                            print(f"{(int)(num/len(start_time_array)/len(end_time_array)/len(beta_array)/len(thrust_cutoff_array)*100)}% completed")
+                        percent_complete=(num/len(start_time_array)/len(end_time_array)/len(beta_array)/len(thrust_cutoff_array))*100
+                        if (int)(percent_complete)/report_percentage/lol==1 or num==10:
+                            print(f"{(int)(percent_complete)}% completed. ETA {int((time.time()-startingtime)*(100/percent_complete-1)/60)} minutes {int((time.time()-startingtime)*(100/percent_complete-1)%60)} seconds. {(int)(num/(time.time()-startingtime))} iters/s")
                             lol+=1
         return start_time_min,end_time_min,beta_min,thrust_cutoff_min
     
-    def epoch(self,start_time=25,end_time=200,beta=0.1,thrust_cutoff=5*60,n=5,delta_start_time=20,delta_end_time=150,delta_beta=0.09,delta_thrust_cutoff=3*60):
-        n_epoch=10
+    def epoch(self,start_time=25,end_time=200,beta=0.1,thrust_cutoff=5*60,n=5,delta_start_time=20,delta_end_time=150,delta_beta=0.09,delta_thrust_cutoff=3*60,n_epochs=10):
+        n_epoch=n_epochs
         for i in range(0,n_epoch):
             start_time_array=np.linspace(start_time-delta_start_time,start_time+delta_start_time,n)
             end_time_array=np.linspace(end_time-delta_end_time,end_time+delta_end_time,n)
@@ -239,7 +254,7 @@ class path_planning:
     
     def objective_function(self,x):
         start_time,end_time,beta,thrust_cutoff=x
-        return self.model(vector_start_time=start_time,vector_end_time=end_time,beta_max=beta,thrust_cutoff=thrust_cutoff)
+        return self.model(vector_start_time=start_time,vector_end_time=end_time,beta_max=beta,thrust_cutoff=thrust_cutoff)+np.abs(self.orbital_velocity_difference)
     
     def constraint1(self,x):
         start_time,end_time,beta,thrust_cutoff=x
@@ -251,29 +266,31 @@ class path_planning:
         start_time,end_time,beta,thrust_cutoff=x
         self.model(vector_start_time=start_time,vector_end_time=end_time,beta_max=beta,thrust_cutoff=thrust_cutoff)
         angle=(np.dot(self.position[-1],self.velocity[-1])/np.linalg.norm(self.position[-1])/np.linalg.norm(self.velocity[-1]))/np.pi*180
-        return 100-angle
+        return 2-angle
     
     def optimise(self):
-        x0=np.array([10,150,0.1,5*60])
+        x0=np.array([20,150,0.1,5*60])
         bounds=((5,50),(50,300),(0.05,0.2),(3*60,8*60))
-        constraints=[ {'type':'ineq','fun':self.constraint1},{'type':'ineq','fun':self.constraint2}]
+        constraints=[ {'type':'ineq','fun':self.constraint2}]
         solution=minimize(self.objective_function,x0,method='SLSQP',bounds=bounds,constraints=constraints)
         print(solution.success)
         print(solution.x)
 
-obj=path_planning(1.3,500e3,330)
-obj.optimise()
-'''
+obj=path_planning(1.3,800e3,330)
+#obj.optimise()
+
 #print(obj.model(beta_max=0,dt=1))
 #obj.plot_altitudes()
-start_time_array=np.linspace(5,50,20)
-end_time_array=np.linspace(50,250,20)
-beta_array=np.linspace(0,0.2,20)
-thrust_cutoff_array=np.linspace(3*60,8*60,20)
+n=10
+start_time_array=np.linspace(5,50,n)
+end_time_array=np.linspace(50,250,n)
+beta_array=np.linspace(0,0.2,n)
+thrust_cutoff_array=np.linspace(3*60,8*60,n)
 #mins=obj.sweep(start_time_array=start_time_array,end_time_array=end_time_array,beta_array=beta_array,thrust_cutoff_array=thrust_cutoff_array)
-mins=obj.epoch()
+mins=obj.epoch(n=12,n_epochs=8)
+#mins=(19.5072259072, 113.80419430399999, 0.0538682899456, 210.0)
 print("losses: ",obj.model(vector_start_time=mins[0],vector_end_time=mins[1],beta_max=mins[2],thrust_cutoff=mins[3],optimising_controls=True))
-print("Delta v: ",obj.model(vector_start_time=mins[0],vector_end_time=mins[1],beta_max=mins[2],thrust_cutoff=mins[3],dt=10,post_burnout=True,total_time=30*60))
+print("Delta v: ",obj.model(vector_start_time=mins[0],vector_end_time=mins[1],beta_max=mins[2],thrust_cutoff=mins[3],post_burnout=True,total_time=3*60*60,dt=0.1))
 print(mins)
 obj.plot_altitudes()
-obj.plotter()'''
+obj.plotter()
