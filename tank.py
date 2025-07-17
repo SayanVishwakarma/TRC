@@ -2,7 +2,7 @@ import math
 def compute_stage_mass(radius_tank,fuel_height,oxidizer_height,outer_diameter_body,height_body,n_engines):
     # Constants
     g0 = 9.81                             # gravity (m/s²)
-    pressure_bar = 5
+    pressure_bar = 4
     pressure_pa = pressure_bar * 1e5
 
     # Tank geometry

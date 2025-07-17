@@ -64,7 +64,7 @@ class evaluate:
             initial_thrust_by_weight = data['thrust by weight'][0]
             Isp = data['average isp']
             orbit = data['target orbit']
-            r1 = delta_v.delta_v(initial_thrust_by_weight, Isp, orbit, 2e9, data["Boostback"])
+            #r1 = delta_v.delta_v(initial_thrust_by_weight, Isp, orbit, 2e9, data["Boostback"])
             out_str+=r1.display_breakdown()
             payload = data['payload']
             n_stages = data['number of stages']
@@ -106,9 +106,10 @@ class evaluate:
             else:
                 s_factors[1]-=0.0001
                 print(f"Underestimated Stage 2 Structural Factor, updating it to {s_factors[1]}")
-                
-        data["updated structural factors"]=[np.round(s_factors,4)[i] for i in range(0,len(np.round(s_factors,4)))]
-        data["structural factors"]=copy.deepcopy(old_structural_factors)
+
+        if data['modify factors']:            
+            data["updated structural factors"]=[np.round(s_factors,4)[i] for i in range(0,len(np.round(s_factors,4)))]
+            data["structural factors"]=copy.deepcopy(old_structural_factors)
         
         with open(input_path, 'w') as file:
             json.dump(data,file,indent=4)
@@ -126,13 +127,13 @@ class evaluate:
         print(f"\nPost optimisation loss : {traj.optimize_controls([vector_start_time,vector_end_time,beta_max],print_stats=True)}")
         traj.__init__(traj.data_copy)
         print("\nSimulating Trajectory")'''
-        start_time_array=np.linspace(10,150,3)
-        end_time_array=np.linspace(100,250,3)
-        beta_array=np.linspace(0.01,0.2,3)
-        traj.sweep_controls(start_time_array,end_time_array,beta_array)        
-        vector_start_time,vector_end_time,beta_max=[5,40,0.15]
-        traj.optimize_controls([vector_start_time,vector_end_time,beta_max],print_stats=True)
-        out_str+=traj.model(vector_start_time=vector_start_time,vector_end_time=vector_end_time,beta_max=beta_max,post_burnout=True)#beta_max=0,post_burnout=False)
+        #start_time_array=np.linspace(10,150,3)
+        #end_time_array=np.linspace(100,250,3)
+        #beta_array=np.linspace(0.01,0.2,3)
+        #traj.sweep_controls(start_time_array,end_time_array,beta_array)        
+        #vector_start_time,vector_end_time,beta_max=[5,40,0.15]
+        #traj.optimize_controls([vector_start_time,vector_end_time,beta_max],print_stats=True)
+        #out_str+=traj.model(vector_start_time=vector_start_time,vector_end_time=vector_end_time,beta_max=beta_max,post_burnout=True)#beta_max=0,post_burnout=False)
         
         
         # Redirect stdout to the output text file
@@ -144,8 +145,8 @@ class evaluate:
         print(f"\nExecution time taken : {time.time()-start_time} s")
         print(f"Results saved to {output_path}")
         #traj.model()
-        traj.plot_altitudes()
-        traj.plotter()
+        #traj.plot_altitudes()
+        #traj.plotter()
         #traj.plotter_inertial_frame()
         
         
@@ -174,6 +175,10 @@ class evaluate:
         #eng_exit_dia_range=[1.23,1.32]
         n_iter=len(payload_range)*len(tank_diameter_range)*len(boostback_1_range)*len(boostback_2_range)*len(eng_thrust_range)
         sr_no=1
+        initial_thrust_by_weight = data['thrust by weight'][0]
+        Isp = data['average isp']
+        orbit = data['target orbit']
+        r1 = delta_v.delta_v(initial_thrust_by_weight, Isp, orbit, 2e9, data["Boostback"])
         for payload in payload_range:
             for tank_diameter in tank_diameter_range:
                 for boostback_1 in boostback_1_range:
@@ -199,10 +204,10 @@ class evaluate:
                             out_str+="---Input Parameters---\n"
                             for key,val in data.items():
                                 out_str+=f"{key} : {val}\n"
-                            initial_thrust_by_weight = data['thrust by weight'][0]
-                            Isp = data['average isp']
-                            orbit = data['target orbit']
-                            r1 = delta_v.delta_v(initial_thrust_by_weight, Isp, orbit, 2e9, data["Boostback"])
+                            #initial_thrust_by_weight = data['thrust by weight'][0]
+                            #Isp = data['average isp']
+                            #orbit = data['target orbit']
+                            #r1 = delta_v.delta_v(initial_thrust_by_weight, Isp, orbit, 2e9, data["Boostback"])
                             r1.boostback_delta_v=[boostback_1,boostback_2]
                             out_str+=r1.display_breakdown()
                             payload = data['payload']
@@ -231,8 +236,8 @@ class evaluate:
                                 initial_thrust_by_weight = data['thrust by weight'][0]
                                 Isp = data['average isp']
                                 orbit = data['target orbit']
-                                r1 = delta_v.delta_v(initial_thrust_by_weight, Isp, orbit, 2e9, data["Boostback"])
-                                r1.boostback_delta_v=[boostback_1,boostback_2]
+                                #r1 = delta_v.delta_v(initial_thrust_by_weight, Isp, orbit, 2e9, data["Boostback"])
+                                #r1.boostback_delta_v=[boostback_1,boostback_2]
                                 out_str+=r1.display_breakdown()
                                 payload = data['payload']
                                 n_stages = data['number of stages']
@@ -310,8 +315,9 @@ class evaluate:
         print(f"Sweep complete. Results saved to {output_excel}")
     
     main("TRC Heavy 2")
+    #main("TRC Superheavy")
     #main("TRC Heavy")
-
+    #sweep("TRC Heavy tank dia sweep")
 
 
 

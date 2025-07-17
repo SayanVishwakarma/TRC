@@ -15,7 +15,7 @@
         0.0461,
         0.101
     ],
-    "modify factors": true,
+    "modify factors": false,
     "payload": 70000.0,
     "Boostback": [
         true,
@@ -35,7 +35,7 @@
         3285000.0
     ],
     "updated structural factors": [
-        0.0588,
-        0.1557
+        0.056,
+        0.1829
     ]
 }
