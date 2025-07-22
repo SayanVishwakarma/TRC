@@ -301,14 +301,14 @@ class path_planning:
                             self.model(vector_start_time=i,vector_end_time=j,beta_max=k,thrust_cutoff=l)#,optimising_controls=True)
                             x=np.abs(self.angle)
                             y=self.orbital_velocity_difference
-                            if self.delta_v<delta_v_min and x<3 and y<0:#(np.abs(x)**2*np.abs(y))<prod_min:
+                            if self.total_delta_v<delta_v_min and x<3 and y<0:#(np.abs(x)**2*np.abs(y))<prod_min:
                                 start_time_min=i*1
                                 end_time_min=j*1
                                 beta_min=k*1
                                 thrust_cutoff_min=l*1
                                 angle_min=np.abs(x*1)
                                 orbital_velocity_difference_min=np.abs(y*1)
-                                delta_v_min=self.delta_v*1
+                                delta_v_min=self.total_delta_v*1
                             self.__init__(thrust_by_weight=thrust_by_weight,isp=isp,targt_orbit=target_orbit)
                             pbar.update(1)
                             '''num+=1
