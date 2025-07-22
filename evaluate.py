@@ -116,25 +116,18 @@ class evaluate:
 
         out_str+="********************************************************************************************************************************\n"
 
-
         traj=rocket.create_trajectory_object()
-        
-        '''
-        controls=[50,100,0.05]
-        vector_start_time,vector_end_time,beta_max=root(traj.optimize_controls,controls).x
-        traj.__init__(traj.data_copy)
-        print(f"\nPost optimisation outputs : {vector_start_time} s, {vector_end_time} s, {beta_max} rad")
-        print(f"\nPost optimisation loss : {traj.optimize_controls([vector_start_time,vector_end_time,beta_max],print_stats=True)}")
-        traj.__init__(traj.data_copy)
-        print("\nSimulating Trajectory")'''
-        #start_time_array=np.linspace(10,150,3)
-        #end_time_array=np.linspace(100,250,3)
-        #beta_array=np.linspace(0.01,0.2,3)
-        #traj.sweep_controls(start_time_array,end_time_array,beta_array)        
-        #vector_start_time,vector_end_time,beta_max=[5,40,0.15]
-        #traj.optimize_controls([vector_start_time,vector_end_time,beta_max],print_stats=True)
-        #out_str+=traj.model(vector_start_time=vector_start_time,vector_end_time=vector_end_time,beta_max=beta_max,post_burnout=True)#beta_max=0,post_burnout=False)
-        
+        traj.simulate_trajectory(n=20,n_epochs=5,dynamic_n=True)
+                                 #,start_time=20,delta_start_time=15
+                                 #,end_time=75,delta_end_time=7550
+                                 #,beta=0.1,delta_beta=0.09,
+                                 #thrust_cutoff=5*60,delta_thrust_cutoff=3*60)
+        print("Simulating final trajectory\n")
+        out_str+=traj.model(vector_start_time=traj.mins[0],vector_end_time=traj.mins[1],beta_max=traj.mins[2],thrust_cutoff_time=traj.mins[3],post_burnout=True,total_time=total_time,display_breakdown=True)
+        traj.plot_altitudes()
+        traj.plotter()
+        #traj.dyn_plotter(animation_speed=5000)
+                
         
         # Redirect stdout to the output text file
         sys.stdout = open(output_path, 'w')
@@ -318,142 +311,3 @@ class evaluate:
     #main("TRC Superheavy")
     #main("TRC Heavy")
     #sweep("TRC Heavy tank dia sweep")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-"""
-
-# Import everything from the __init__.py file (likely includes delta_v and stage_optimizer modules)
-from __init__ import *
-
-# Define a class called 'evaluate' to perform the rocket evaluation
-class evaluate:
-    out_str=""
-    start_time=time.time()
-    # Set the rocket name
-    rocket_name = "TRC"
-    output_folder="output files/" + rocket_name + " files"
-    os.makedirs(output_folder, exist_ok=True)
-    # Define input and output file paths
-    input_path = "input files/" + rocket_name + ".json"
-    output_path = "output files/" + rocket_name + " files/" + rocket_name + ".txt"
-    json_output_path = "output files/" + rocket_name + " files/" + rocket_name + ".json"
-
-    # Open the input JSON file and load rocket parameters into a dictionary
-    with open(input_path) as file:
-        data = json.load(file)
-
-    
-
-    # Print a header with the rocket name
-    out_str+="**********************************************************************************"+ rocket_name+ "**********************************************************************************"
-    out_str+="\n"
-    #print(out_str)
-    #print("**********************************************************************************", rocket_name, "**********************************************************************************")
-    out_str+="---Input Parameters---\n"
-    #print(f"---Input Parameters---")
-    for key,val in data.items():
-        out_str+=f"{key} : {val}\n"
-        #print(f"{key} : {val}")    
-    # Extract initial thrust-to-weight ratio and average specific impulse
-    initial_thrust_by_weight = data['thrust by weight'][0]
-    Isp = data['average isp']
-
-    # Extract the target orbit altitude
-    orbit = data['target orbit']
-
-    # Calculate the required delta-v using the delta_v module
-    # Parameters: T/W, Isp, target orbit (km), payload mass (fixed here as 2e9), and boostback flag
-    r1 = delta_v.delta_v(initial_thrust_by_weight, Isp, orbit, 2e9, data["Boostback"])
-
-    # Display the breakdown of the delta-v calculation
-    
-    out_str+=r1.display_breakdown()
-
-    # Extract payload mass and number of stages from the input data
-    payload = data['payload']
-    n_stages = data['number of stages']
-
-    # Check if boostback is enabled in the input data
-    if data["Boostback"] == "True":
-        # Use stage_optimizer with boostback capability
-        r2 = stage_optimizer.stage_optimizer(
-            [r1.total_delta_v, r1.boostback_delta_v],
-            payload,
-            n_stages,
-            np.array(data['isps']),
-            np.array(data['structural factors']),
-            boostback=True
-        )
-    else:
-        # Use stage_optimizer without boostback
-        r2 = stage_optimizer.stage_optimizer(
-            r1.total_delta_v,
-            payload,
-            n_stages,
-            np.array(data['isps']),
-            np.array(data['structural factors'])
-        )
-
-    # Get the resulting rocket object from the optimizer
-    rocket = r2.rocket
-
-    out_str+=r2.tabulate_mass_breakdown()
-
-    r2.create_rocket_json(json_output_path)
-
-    # Add additional rocket configuration data (e.g., tank, engine, fuel) to the rocket object
-    rocket.add_rocket_data(data)
-
-    # Assign thrust-to-weight ratios for each stage
-    rocket.thrust_by_weight = np.array(data["thrust by weight"])
-
-    # Optionally, display simulation and sizing (currently commented out)
-    # rocket.display_states()
-    # rocket.size_rocket()
-    # rocket.simulate_burn_2()
-
-    # Tabulate and print the stage breakdown of the rocket
-    out_str+=rocket.tabulate_rocket_stages()
-
-    # Print a footer to mark end of output
-    out_str+="********************************************************************************************************************************\n"
-    #print("********************************************************************************************************************************")
-
-    traj=rocket.create_trajectory_object()
-    
-    #best_time,best_beta=trajectory.optimize_betas_2(traj.data,n_betas=10,n_ts=100,t2=2000,beta_max=1)
-    #out_str+=traj.model(vector_end_time=best_time,beta_max=best_beta,total_time=50*60)
-    
-    out_str+=traj.model(beta_max=0.5,dt=1)
-    # Redirect stdout to the output text file
-    sys.stdout = open(output_path, 'w')
-    print(out_str)
-    sys.stdout.close()
-    sys.stdout = sys.__stdout__
-
-    print(f"Execution time taken : {time.time()-start_time} s")
-    traj.plotter()
-    traj.plotter_inertial_frame()
-    traj.plot_altitudes_inertial_frame()
-    
-
-
-
-"""

@@ -24,11 +24,12 @@ class delta_v:
         #self.calculate_total_delta_v()
         self.path=path_planning.path_planning(thrust_by_weight_initial,target_orbit*1e3,Isp)
         print(f"Calculating delta v requirements")
-        self.path.path_planner(n=10,n_epochs=7,dynamic_n=True)
+        self.path.path_planner(n=20,n_epochs=8,dynamic_n=True)
+        self.optimal_orbital_parameters=self.path.mins
         self.gravitational_delta_v=np.abs(self.path.gravity_delta_v)
         self.drag_delta_v=self.path.drag_delta_v
         self.total_delta_v=self.path.total_delta_v
-        print(self.total_delta_v)
+        print(f"TOTAL DELTA V REQUIRED: {self.total_delta_v}\n")
 
 
     def calculate_boostback_delta_v(self):
