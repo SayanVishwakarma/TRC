@@ -160,11 +160,20 @@ class traj:
             self.burnout_times+=[self.time[-1]]
             propellant_used=self.stage_masses[current_stage]*(1-np.exp(orbital_velocity_difference/self.data["isp"][current_stage]/g))
             if display_breakdown:
-                print(f"Final orbit {(np.linalg.norm(self.position[-1])-R_earth)/1000}")
-                print(f"Final velocity magnitude {np.linalg.norm(self.velocity[-1])}")
-                print(f"Required velocity magnitude {(g*R_earth**2/np.linalg.norm(self.position[-1]))**0.5}")
-                print(f"Angle difference {90-np.arccos(np.dot(self.position[-1],self.velocity[-1])/np.linalg.norm(self.position[-1])/np.linalg.norm(self.velocity[-1]))/np.pi*180}")
+                print(f"Final orbit {(np.linalg.norm(self.position[-1])-R_earth)/1000} km")
+                print(f"Final velocity magnitude {np.linalg.norm(self.velocity[-1])} m/s")
+                print(f"Required velocity magnitude {(g*R_earth**2/np.linalg.norm(self.position[-1]))**0.5} m/s")
+                print(f"Angle difference {90-np.arccos(np.dot(self.position[-1],self.velocity[-1])/np.linalg.norm(self.position[-1])/np.linalg.norm(self.velocity[-1]))/np.pi*180} deg")
                 print(f"Ascent propellant left {self.stage_propellant_masses[current_stage]-propellant_used} kg")
+                print(f"Final insertion engine fire duration {np.abs(orbital_velocity_difference)/G_force_limit/g} s")
+                print(f"Total delta v {self.total_delta_v} m/s")
+
+                out_str+="********************************************************************************************************************************"
+                out_str+=f"Final orbit {(np.linalg.norm(self.position[-1])-R_earth)/1000} km\n"
+                out_str+=f"Final velocity magnitude {np.linalg.norm(self.velocity[-1])} m/s\n"
+                out_str+=f"Required velocity magnitude {(g*R_earth**2/np.linalg.norm(self.position[-1]))**0.5} m/s\n"
+                #out_str+=f"Angle difference {90-np.arccos(np.dot(self.position[-1],self.velocity[-1])/np.linalg.norm(self.position[-1])/np.linalg.norm(self.velocity[-1]))/np.pi*180} deg\n"
+                out_str+=f"Ascent propellant left {self.stage_propellant_masses[current_stage]-propellant_used} kg\n"
 
 
         self.burnouts=np.array(self.burnouts)

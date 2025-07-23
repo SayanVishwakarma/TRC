@@ -201,7 +201,7 @@ class stage_optimizer():
         #print("\n===================================================================================")
         if self.boostback[0] or self.boostback[1]:
             del_v_b=0
-            out_str+=f"Delta-v Achieved (excluding boostback): {round(self.delta_v_achieved, 2)} m/s\n"
+            out_str+=f"Delta-v Available (excluding boostback): {round(self.delta_v_achieved, 2)} m/s\n"
             for i in range(0,self.number_of_stages):
                 if self.boostback[i]:
                     out_str+=f"Boostback Delta-v Achieved for stage {i+1}: {round(-self.Isps[i]*g*np.log(self.epsilon_boostback[i]), 2)} m/s\n"
