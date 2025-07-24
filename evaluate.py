@@ -116,17 +116,19 @@ class evaluate:
 
         out_str+="********************************************************************************************************************************\n"
 
+
+        #START TIME HAS BEEN FIXED REMEMBR TO CHANGE IT
+
         traj=rocket.create_trajectory_object()
-        traj.mins=(20.899700750657896, 60.003144304746236, 0.15195089285164473, 290.1446751769736)
-        #traj.simulate_trajectory(n=8,n_epochs=5,dynamic_n=True)
+        #traj.mins=(20.899700750657896, 60.003144304746236, 0.15195089285164473, 290.1446751769736)
+        traj.simulate_trajectory(n=20,n_epochs=5,dynamic_n=True)
                                  #,start_time=20,delta_start_time=15
                                  #,end_time=75,delta_end_time=7550
                                  #,beta=0.1,delta_beta=0.09,
                                  #thrust_cutoff=5*60,delta_thrust_cutoff=3*60)
         print("Simulating final trajectory\n")
-        out_str+=traj.model(vector_start_time=traj.mins[0],vector_end_time=traj.mins[1],beta_max=traj.mins[2],thrust_cutoff_time=traj.mins[3],post_burnout=False,total_time=3*60*60,display_breakdown=True)
+        out_str+=traj.model(vector_start_time=traj.mins[0],vector_end_time=traj.mins[1],beta_max=traj.mins[2],thrust_cutoff_time=traj.mins[3],post_burnout=True,total_time=3*60*60,display_breakdown=True)
         traj.plot_altitudes()
-        traj.model(vector_start_time=traj.mins[0],vector_end_time=traj.mins[1],beta_max=traj.mins[2],thrust_cutoff_time=traj.mins[3],post_burnout=True,total_time=3*60*60,display_breakdown=False)
         traj.plotter()
 
         #traj.dyn_plotter(animation_speed=5000)

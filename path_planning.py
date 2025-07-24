@@ -1,4 +1,5 @@
 from __init__ import *
+
 class path_planning:
     def __init__(self,thrust_by_weight,targt_orbit,isp):
         self.position=[np.array([R_earth*np.cos(latitude),0,R_earth*np.sin(latitude)])]
@@ -61,8 +62,8 @@ class path_planning:
 
         while (np.linalg.norm(self.position[-1])-R_earth-self.target_orbit)<0 and np.linalg.norm(self.position[-1])-R_earth>=0:
             if self.thrust_magnitude/self.mass/g>G_force_limit:
-                self.thrust_by_weight=G_force_limit
-                self.thrust_magnitude=self.thrust_by_weight*self.mass*g
+                #self.thrust_by_weight=G_force_limit
+                self.thrust_magnitude=G_force_limit*self.mass*g
 
             if self.time[-1]>thrust_cutoff:
                 self.thrust_magnitude=0
@@ -109,7 +110,7 @@ class path_planning:
         orbital_velocity_difference=((np.linalg.norm(self.velocity[-1])-(g*R_earth**2/np.linalg.norm(self.position[-1]))**0.5))
         self.orbital_velocity_difference=orbital_velocity_difference
         
-        self.total_delta_v=self.delta_v-self.orbital_velocity_difference+self.drag_delta_v   
+        self.total_delta_v=self.delta_v+np.abs(self.orbital_velocity_difference)+self.drag_delta_v   
         
         if np.linalg.norm(self.position[-1])-R_earth<0:
             self.angle=1e3
@@ -141,7 +142,7 @@ class path_planning:
 
         
         if display_breakdown:
-            print(f"GRAVITY DELTA V : {self.gravity_delta_v}, STEERING LOSS : {self.steering_loss}, DRAG DELTA V : {self.drag_delta_v}, ORBITAL VELOCITY DIFFERENCE : {orbital_velocity_difference}, INSERTION ANGLE : {self.angle}")
+            print(f"TOTAL DELTA V : {self.total_delta_v}, GRAVITY DELTA V : {self.gravity_delta_v}, STEERING LOSS : {self.steering_loss}, DRAG DELTA V : {self.drag_delta_v}, ORBITAL VELOCITY DIFFERENCE : {orbital_velocity_difference}, INSERTION ANGLE : {self.angle}")
         return self.delta_v+np.abs(self.orbital_velocity_difference)
 
     def model_obsolete(self,post_burnout=False,dt=dt,vector_start_time=10,vector_end_time=120,beta_max=0.2,total_time=total_time,optimising_controls=False,thrust_cutoff=60*8):
@@ -326,7 +327,8 @@ class path_planning:
                 if dynamic_n and n_epoch>1:
                     n1=n+(3-n)/(n_epoch-1)*i
                 n1=int(n1)
-                start_time_array=np.linspace(start_time-delta_start_time,start_time+delta_start_time,n1)
+                #start_time_array=np.linspace(start_time-delta_start_time,start_time+delta_start_time,n1)
+                start_time_array=[5]
                 end_time_array=np.linspace(end_time-delta_end_time,end_time+delta_end_time,n1)
                 beta_array=np.linspace(beta-delta_beta,beta+delta_beta,n1)
                 thrust_cutoff_array=np.linspace(thrust_cutoff-delta_thrust_cutoff,thrust_cutoff+delta_thrust_cutoff,n1)
@@ -352,25 +354,83 @@ class path_planning:
         print(solution.x)
         return solution.x
 
-    def path_planner(self,n=3,n_epochs=8,dynamic_n=False):
+    def path_planner(self,n=3,n_epochs=8,dynamic_n=False,check_history=True):
         with open('data files/delta v tables.txt','r') as f:
             lines=f.readlines()
-            for line in lines[1:]:
-                if float(line.split()[0])==self.thrust_by_weight and float(line.split()[1])==self.target_orbit and float(line.split()[2])==self.isp:
-                    self.mins=[float(i) for i in line.split()[3:]]
-                    mins=self.mins
-                    print("Optimal Parameters Found In Database.\nOptimal Parameters= ",self.mins,"\n")
-                    #print(np.linalg.norm(self.position))
-                    self.model(vector_start_time=mins[0],vector_end_time=mins[1],beta_max=mins[2],thrust_cutoff=mins[3],post_burnout=True,display_breakdown=True)
-                    #self.plot_altitudes()
-                    return
+            min_d_v=1e10
+            if check_history:
+                for line in lines[1:]:
+                    if float(line.split()[0])==self.thrust_by_weight and float(line.split()[1])==self.target_orbit and float(line.split()[2])==self.isp:
+                        if float(line.split()[7])<min_d_v:
+                            self.mins=[float(i) for i in line.split()[3:]]
+                            mins=self.mins
+                            min_d_v=float(line.split()[7])
+                print("Optimal Parameters Found In Database With Delta V = ",min_d_v,".\nOptimal Parameters= ",self.mins,"\n")
+                #print(np.linalg.norm(self.position))
+                self.model(vector_start_time=mins[0],vector_end_time=mins[1],beta_max=mins[2],thrust_cutoff=mins[3],post_burnout=True,display_breakdown=True)
+                #self.plot_altitudes()
+                return
         mins=self.epoch(n=n,n_epochs=n_epochs,dynamic_n=dynamic_n)
         self.mins=mins
-        with open('data files/delta v tables.txt','a') as f:
-            f.write(f"{self.thrust_by_weight} {self.target_orbit} {self.isp} {' '.join([str(i) for i in mins])}\n")
-        print("Optimal Parameters = ",mins,"\n")
-        self.model(vector_start_time=mins[0],vector_end_time=mins[1],beta_max=mins[2],thrust_cutoff=mins[3],post_burnout=False,display_breakdown=True)
-        #self.plot_altitudes()
+        if np.all(self.mins)!=0:
+            print("Optimal Parameters = ",mins,"\n")
+            self.model(vector_start_time=mins[0],vector_end_time=mins[1],beta_max=mins[2],thrust_cutoff=mins[3],post_burnout=False,display_breakdown=True)
+            with open('data files/delta v tables.txt','a') as f:
+                f.write(f"{self.thrust_by_weight} {self.target_orbit} {self.isp} {' '.join([str(i) for i in mins])} {self.total_delta_v}\n")
+            #self.plot_altitudes()
 
-#o=path_planning(thrust_by_weight=1.89999,targt_orbit=500e3,isp=360)
-#o.path_planner(n=10,n_epochs=8,dynamic_n=True)
+    def plot_variations(self,start_time_array,end_time_array,beta_array,thrust_cutoff_array):
+        plt.figure()
+        thrust_by_weight=self.thrust_by_weight*1
+        isp=self.isp
+        target_orbit=self.target_orbit
+        delta_vs=[]
+        with tqdm.tqdm(total=len(start_time_array)*len(end_time_array)*len(beta_array)*len(thrust_cutoff_array)) as pbar:
+            for i in start_time_array:
+                for j in end_time_array:
+                    for k in beta_array:
+                        for l in thrust_cutoff_array:
+                            self.model(vector_start_time=i,vector_end_time=j,beta_max=k,thrust_cutoff=l)#,optimising_controls=True)
+                            x=np.abs(self.angle)
+                            y=self.orbital_velocity_difference
+                            if x<3 and y<0:#(np.abs(x)**2*np.abs(y))<prod_min:
+                                delta_vs+=[self.total_delta_v*1]
+                            else:
+                                delta_vs+=[0]
+                            self.__init__(thrust_by_weight=thrust_by_weight,isp=isp,targt_orbit=target_orbit)
+                            pbar.update(1)
+        for arr in [start_time_array,end_time_array,beta_array,thrust_cutoff_array]:
+            if len(arr)>1:
+                plt.plot(arr,delta_vs)
+                for name, value in locals().items():
+                    if value is arr:
+                        output_file = f"data files/delta_v variation plots/{self.thrust_by_weight,self.target_orbit,self.isp,name}.png"
+                        break
+                break
+        plt.savefig(output_file)
+        print(f"Plot saved to {output_file}")
+        plt.show()
+        
+#START TIME HAS BEEN FIXED REMEMBR TO CHANGE IT
+
+
+o=path_planning(thrust_by_weight=1.1,targt_orbit=500e3,isp=350)
+o.path_planner(n=60,n_epochs=1,dynamic_n=True,check_history=False)
+o=path_planning(thrust_by_weight=1.2,targt_orbit=500e3,isp=350)
+o.path_planner(n=60,n_epochs=1,dynamic_n=True,check_history=False)
+o=path_planning(thrust_by_weight=1.3,targt_orbit=500e3,isp=350)
+o.path_planner(n=60,n_epochs=1,dynamic_n=True,check_history=False)
+o=path_planning(thrust_by_weight=1.4,targt_orbit=500e3,isp=350)
+o.path_planner(n=60,n_epochs=1,dynamic_n=True,check_history=False)
+o=path_planning(thrust_by_weight=1.5,targt_orbit=500e3,isp=350)
+o.path_planner(n=60,n_epochs=1,dynamic_n=True,check_history=False)
+o=path_planning(thrust_by_weight=1.6,targt_orbit=500e3,isp=350)
+o.path_planner(n=60,n_epochs=1,dynamic_n=True,check_history=False)
+o=path_planning(thrust_by_weight=1.7,targt_orbit=500e3,isp=350)
+o.path_planner(n=60,n_epochs=1,dynamic_n=True,check_history=False)
+o=path_planning(thrust_by_weight=1.8,targt_orbit=500e3,isp=350)
+o.path_planner(n=60,n_epochs=1,dynamic_n=True,check_history=False)
+#o.plot_variations(np.linspace(2,20,1000), [60.02816091954023], [0.10903009482758622], [240.53743103448278])
+#o.plot_variations([2], np.linspace(10,250,1000), [0.10903009482758622], [240.53743103448278])
+#o.plot_variations([2], [60.02816091954023], np.linspace(0.01,0.2,1000), [240.53743103448278])
+#o.plot_variations([2], [60.02816091954023], [0.10903009482758622], np.linspace(180,480,1000))

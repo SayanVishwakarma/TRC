@@ -646,7 +646,8 @@ class traj:
                 if dynamic_n and n_epoch>1:
                     n1=n+(3-n)/(n_epoch-1)*i
                 n1=int(n1)
-                start_time_array=np.linspace(start_time-delta_start_time,start_time+delta_start_time,n1)
+                #start_time_array=np.linspace(start_time-delta_start_time,start_time+delta_start_time,n1)
+                start_time_array=[5]
                 end_time_array=np.linspace(end_time-delta_end_time,end_time+delta_end_time,n1)
                 beta_array=np.linspace(beta-delta_beta,beta+delta_beta,n1)
                 thrust_cutoff_array=np.linspace(thrust_cutoff-delta_thrust_cutoff,thrust_cutoff+delta_thrust_cutoff,n1)

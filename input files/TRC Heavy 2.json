@@ -1,7 +1,7 @@
 {
     "rocket name": "TRC Heavy 2",
     "target orbit": 500,
-    "average isp": 360,
+    "average isp": 340,
     "thrust by weight": [
         1.9,
         1.4
