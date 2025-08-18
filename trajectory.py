@@ -865,7 +865,7 @@ class step_one_boostback_traj:
             self.time+=[self.time[-1]+dt]
 
         if display_breakdown:
-            print(f"GRAVITY DELTA V : {self.gravity_delta_v}, STEERING LOSS : {self.steering_loss}, DRAG DELTA V : {self.drag_delta_v}, ORBITAL VELOCITY DIFFERENCE : {orbital_velocity_difference}, INSERTION ANGLE : {self.angle}")
+            print(f"GRAVITY DELTA V : {self.gravity_delta_v}, STEERING LOSS : {self.steering_loss}, DRAG DELTA V : {self.drag_delta_v}")
 
         self.burnouts+=[self.position[-1]]
         self.burnout_times+=[self.time[-1]]
