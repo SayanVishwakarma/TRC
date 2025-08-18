@@ -1,0 +1,7 @@
+problem   
+      rocket  equilibrium 
+  p,bar=120
+  sup,ae/at=40
+react  
+  oxid=NH4CLO4(I) wt=80  t,k=300 
+end

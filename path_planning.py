@@ -413,7 +413,7 @@ class path_planning:
         
 #START TIME HAS BEEN FIXED REMEMBR TO CHANGE IT
 
-
+"""
 o=path_planning(thrust_by_weight=1.1,targt_orbit=500e3,isp=350)
 o.path_planner(n=60,n_epochs=1,dynamic_n=True,check_history=False)
 o=path_planning(thrust_by_weight=1.2,targt_orbit=500e3,isp=350)
@@ -430,6 +430,7 @@ o=path_planning(thrust_by_weight=1.7,targt_orbit=500e3,isp=350)
 o.path_planner(n=60,n_epochs=1,dynamic_n=True,check_history=False)
 o=path_planning(thrust_by_weight=1.8,targt_orbit=500e3,isp=350)
 o.path_planner(n=60,n_epochs=1,dynamic_n=True,check_history=False)
+"""
 #o.plot_variations(np.linspace(2,20,1000), [60.02816091954023], [0.10903009482758622], [240.53743103448278])
 #o.plot_variations([2], np.linspace(10,250,1000), [0.10903009482758622], [240.53743103448278])
 #o.plot_variations([2], [60.02816091954023], np.linspace(0.01,0.2,1000), [240.53743103448278])

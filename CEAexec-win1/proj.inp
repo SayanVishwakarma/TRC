@@ -1,0 +1,15 @@
+problem   
+    rocket  equilibrium  tcest,k=3800
+  p,bar=100,
+  pi/p=100,
+react  
+  fuel=HTPB  wt=0.14  t,k=300  
+    h,kj/mol=-51.9  C 10 H 15.4 O 0.07 
+  oxid=HNF  wt=0.7  t,k=300  
+    h,kj/mol=-73.048  N 5 H 5 C 1 O 6 
+  fuel=Mg  wt=0.16  t,k=300  
+    h,kj/mol=-20  MG 1 
+output  
+     siunits
+    plot p 
+end

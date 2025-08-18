@@ -1,0 +1,11 @@
+problem   
+    rocket  equilibrium  frozen  nfz=1 
+  p,bar=50,
+  pi/p=50,
+react  
+  fuel=AL(cr) wt=9  t,k=298  
+  fuel=Sorbitol  wt=32  t,k=298  
+    h,kj/mol=-1353  C 6 H 14 O 6 
+  oxid=KNO3  wt=59  t,k=298  
+    h,kj/mol=-494.6  K 1 N 1 O 3 
+end

@@ -1,4 +1,4 @@
-from __init__ import *
+import math
 def clean_fuel_data2(data,i):
     if i==len(data)-1:
         return data[i-1]

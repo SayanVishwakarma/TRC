@@ -1,0 +1,10 @@
+problem   
+    rocket  equilibrium 
+  p,bar=50,70,100,120,
+  sup,ae/at=10,20,30,40,
+react  
+  oxid=NH4CLO4(I) wt=60  t,k=300  
+  fuel=HTPB  wt=20  t,k=300  
+    h,kj/mol=-51.88  C 10 H 15.4 O 0.007 
+  fuel=RDX  wt=20  t,k=300  C 3 H 6 N 6 O 6 
+end

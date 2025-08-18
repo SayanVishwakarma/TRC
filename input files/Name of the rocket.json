@@ -1,0 +1,36 @@
+{
+    "rocket name": "Name of the rocket",
+    "target orbit": 500,
+    "number of stages": 2,
+    "payload": 22800,
+    "thrust by weight": [
+        1.55,
+        0.56
+    ],
+    "average isp": 300,
+    "isps": [
+        311,
+        348
+    ],
+    "structural factors": [
+        0.05136,
+        0.0434
+    ],
+    "Boostback": [
+        true,
+        false
+    ],
+    "step diameters": [
+        3.7,
+        3.7
+    ],
+    "fuel density": 820,
+    "oxidiser density": 1141,
+    "tank diameters": 3.66,
+    "o/f": 2.6,
+    "engine height": 2.3,
+    "engine thrust": [
+        845000.0,
+        915000.0
+    ]
+}

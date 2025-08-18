@@ -1,0 +1,10 @@
+problem   
+    rocket  frozen  nfz=1 
+  p,bar=300,
+  pi/p=300,
+react  
+  fuel=CH4(L) wt=0.1  t,k=112  
+  oxid=O2(L) wt=0.9  t,k=90  
+output  
+    plot t p mw gam 
+end

@@ -12,8 +12,8 @@
         380
     ],
     "structural factors": [
-        0.0461,
-        0.101
+        0.0561,
+        0.11
     ],
     "modify factors": false,
     "payload": 70000.0,
@@ -36,6 +36,6 @@
     ],
     "updated structural factors": [
         0.056,
-        0.1829
+        0.1719
     ]
 }

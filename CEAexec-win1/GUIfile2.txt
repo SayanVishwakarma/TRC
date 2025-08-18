@@ -1,0 +1,14 @@
+      
+     prob           
+rocket equilibrium frozen nfz=1                                                                                         
+p,bar=50                                                                                                                
+pi/pe=50                                                                                                                
+      
+     reac           
+oxid=N2O wt=3                                                                                                           
+fuel=Wax wt=1 t,k=298 h,kj/mol=14800 C 20 H 42                                                                          
+      
+     outp           
+siunits plot p t gam son mw m                                                                                           
+      
+     end            

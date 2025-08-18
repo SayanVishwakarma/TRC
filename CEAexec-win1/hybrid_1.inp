@@ -1,0 +1,12 @@
+problem   
+    rocket  equilibrium  frozen  nfz=1 
+  p,bar=50,
+  pi/p=50,
+react  
+  oxid=N2O wt=5  
+  fuel=Wax  wt=1  t,k=298  
+    h,kj/mol=457  C 20 H 42 
+output  
+     siunits
+    plot p t gam son mw m 
+end
