@@ -1019,6 +1019,7 @@ class step_one_boostback_traj:
                                 positon_difference=np.linalg.norm(self.position[-1])-R_earth*np.array([np.cos(latitude)*np.cos(theta_final),np.cos(latitude)*np.sin(theta_final),np.sin(latitude)])
                                 absolute_position_difference=np.linalg.norm(positon_difference)
                                 final_velocity=np.linalg.norm(self.velocity[-1])
+                                x=absolute_position_difference
                                 y=self.orbital_velocity_difference
                                 if self.total_delta_v<total_delta_v and x<3 and y<0 and (self.orbit_difference)>0:#(np.abs(x)**2*np.abs(y))<prod_min:
                                     start_time_min=i*1
