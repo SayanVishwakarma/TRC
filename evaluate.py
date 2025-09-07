@@ -114,24 +114,45 @@ class evaluate:
         with open(input_path, 'w') as file:
             json.dump(data,file,indent=4)
 
-        out_str+="********************************************************************************************************************************\n"
+        out_str+="\n********************************************************************************************************************************\n"
 
 
         #START TIME HAS BEEN FIXED REMEMBR TO CHANGE IT
 
         traj=rocket.create_trajectory_object()
-        traj.mins=(5, 60.003144304746236, 0.09512592820098685, 270.04016389877813)
-        #traj.simulate_trajectory(n=20,n_epochs=5,dynamic_n=True)
+        #traj.mins=(5, 60.003144304746236, 0.1237625780263158, 420.4619684100563)
+        #traj.mins=(5, 80.29662781038536, 0.11436489662203948, 480.0)
+        #traj.mins=(5, 184.48275862068965, 0.03482758620689656, 480.0)
+        #traj.simulate_trajectory(n=30,n_epochs=1,dynamic_n=True)
                                  #,start_time=20,delta_start_time=15
-                                 #,end_time=75,delta_end_time=7550
+                                 #,end_time=100,delta_end_time=50
                                  #,beta=0.1,delta_beta=0.09,
                                  #thrust_cutoff=5*60,delta_thrust_cutoff=3*60)
-        #print("Simulating final trajectory\n")
-        out_str+=traj.model(vector_start_time=traj.mins[0],vector_end_time=traj.mins[1],beta_max=traj.mins[2],thrust_cutoff_time=traj.mins[3],post_burnout=True,total_time=3*60*60,display_breakdown=True)
-        #traj.plot_altitudes()
-        #traj.plotter()
 
-        #traj.dyn_plotter(animation_speed=5000)
+        if traj.mins!=[0,0,0,0]:
+            if "optimal launch parameters" in data.keys():
+                data["optimal launch parameters"]+=[traj.mins]
+            else:
+                data["optimal launch parameters"]=[traj.mins]
+        with open(input_path, 'w') as file:
+            json.dump(data,file,indent=4)
+        #print("Simulating final trajectory\n")
+        out_str+="									---------------Launch Trajectories---------------\n"
+        out_str+="********************************************************************************************************************************\n"
+        for vals in data["optimal launch parameters"]:
+            traj.__init__(traj.data_copy)
+            traj.mins=vals
+            out_str+="\n\nOptimal Launch Parameters = " + str(traj.mins) + "\n"
+            out_str+=traj.model(vector_start_time=traj.mins[0],vector_end_time=traj.mins[1],beta_max=traj.mins[2],thrust_cutoff_time=traj.mins[3],
+                                post_burnout=True,
+                                total_time=1.7*60*60,
+                                display_breakdown=True)
+            #traj.plot_altitudes()
+            traj.plotter()
+            #print(traj.total_rotation*180/pi)
+            traj.save_trajectory()
+            traj.plot_magnitudes()#aoa=True)
+            #traj.dyn_plotter(animation_speed=5000)
                 
         
         # Redirect stdout to the output text file
@@ -312,7 +333,7 @@ class evaluate:
         df.to_excel(output_excel, index=False)
         print(f"Sweep complete. Results saved to {output_excel}")
     
-    main("TRC Heavy 2")
-    #main("TRC Superheavy")
+    #main("TRC Heavy 2")
+    main("TRC Superheavy")
     #main("TRC Heavy")
     #sweep("TRC Heavy tank dia sweep")

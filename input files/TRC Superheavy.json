@@ -1,0 +1,45 @@
+{
+    "rocket name": "TRC Superheavy",
+    "target orbit": 500,
+    "average isp": 350,
+    "thrust by weight": [
+        1.1,
+        0.8
+    ],
+    "number of stages": 2,
+    "isps": [
+        350,
+        380
+    ],
+    "structural factors": [
+        0.075,
+        0.045
+    ],
+    "modify factors": false,
+    "payload": 70000.0,
+    "Boostback": [
+        true,
+        true
+    ],
+    "step diameters": [
+        8,
+        8
+    ],
+    "fuel density": 420,
+    "oxidiser density": 1141,
+    "tank diameters": 7.5,
+    "o/f": 2.6,
+    "engine height": 3.1,
+    "engine thrust": [
+        2400000.0,
+        3085000.0
+    ],
+    "optimal launch parameters": [
+        [
+            10,
+            50.0,
+            0.11551724137931035,
+            480.0
+        ]
+    ]
+}

@@ -9,6 +9,7 @@ z is vertically upwards against gravity
 #Importing required packages
 import sys
 import os
+import  csv
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import fsolve, minimize, differential_evolution, root, root_scalar
@@ -31,16 +32,17 @@ g=9.8 #m/s^2
 R_earth=6371e3 #meter
 dt=10 #seconds
 total_time=60*60
-latitude= 29 / 180 * np.pi #radians
+latitude= 19.5 / 180 * np.pi #radians
+longitude= 41.5 / 180 * np.pi #radians
 w_earth=2*np.pi/24/60/60 #rad/s
-G_force_limit=4
+G_force_limit=3
 
 
 #importing our classes
 import delta_v
 import rocket
 import stage_optimizer
-#import trajectory
+import trajectory
 import tank
 import utils
 

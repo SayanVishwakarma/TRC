@@ -6,11 +6,13 @@ class traj:
 
     def __init__(self,data):
         self.position=[np.array([R_earth*np.cos(latitude),0,R_earth*np.sin(latitude)])]
+        self.position_ecef=[self.position[0]]
+        self.lat_long=[np.array([latitude,0])]
         self.omega_earth=np.array([0,0,w_earth])
         self.velocity=[np.cross(np.array([0,0,w_earth]),self.position[-1])]
         #self.velocity=[np.array([0.001,0,0])]
         self.acceleration=[np.array([0,0,0])]
-        self.aoa=[0]
+        #self.aoa=[0]
         self.gravity=-g*np.array([np.cos(latitude),0,np.sin(latitude)])
         self.thrust_position=np.array([0,0,-30])
         self.time=[0.0]
@@ -27,12 +29,20 @@ class traj:
         self.burnout_times=[]
         self.q=np.array([np.cos((np.pi/2-latitude)/2),0,np.sin((np.pi/2-latitude)/2),0])
         self.orientation=[self.quaternion_to_dcm(self.q)@[0,0,1]]
+        self.aoa=[0]
         
         self.gravity_delta_v=0
         self.thrust_delta_v=0
         self.steering_loss=0
         self.drag_delta_v=0
         self.total_delta_v=0
+
+        self.mins=[0,0,0,0]
+        self.total_rotation=0
+
+        self.state_history=["Stage 1"]
+        self.current_state="Stage 1"
+
 
     def rocket_inertia_tensor(self,mass, radius, length):
         I_xx = (1/12) * mass * (3 * radius**2 + length**2)
@@ -65,7 +75,7 @@ class traj:
 
     def model(self,post_burnout=False,dt=dt,vector_start_time=10,vector_end_time=120,beta_max=0.2,thrust_cutoff_time=300,total_time=total_time,display_breakdown=False):
         n=1
-        out_str=f"\nRocket liftoff from {np.round(self.position[0]/1000,2)} km. Earth rotates along the Z-axis\n"
+        out_str=f"Rocket liftoff from {np.round(self.position[0]/1000,2)} km. Earth rotates along the Z-axis\n"
         current_stage=0
         self.thrust_by_weight=self.data['thrust by weight'][current_stage]
         self.thrust_magnitude=self.thrust_by_weight*self.stage_masses[current_stage]*g
@@ -94,6 +104,8 @@ class traj:
             thrust_body_frame=Rx@np.array([0,0,self.thrust_magnitude])
             torque_body_frame=np.cross(self.thrust_position,thrust_body_frame)
             omega_body_frame=np.linalg.solve(self.inertia_matrix[current_stage],torque_body_frame)
+
+            self.total_rotation+=omega_body_frame*dt
             
             R_b_to_i = self.quaternion_to_dcm(self.q)
             thrust_eci_frame = R_b_to_i @ thrust_body_frame
@@ -109,7 +121,14 @@ class traj:
             self.acceleration+=[thrust_eci_frame/self.stage_masses[current_stage]+gravity_eci_frame]
             self.velocity+=[self.velocity[-1]+self.acceleration[-1]*dt]
             self.position+=[self.position[-1]+self.velocity[-1]*dt+0.5*self.acceleration[-1]*dt*dt]
+            the=-w_earth*(self.time[-1]+dt)
+            Rz = np.array([[ np.cos(the), -np.sin(the), 0],
+                            [ np.sin(the),  np.cos(the), 0],
+                            [0,0,1]        ])
+            self.position_ecef+=[Rz@self.position[-1]]
+            self.lat_long+=[np.array([np.arcsin(self.position_ecef[-1][2]/np.linalg.norm(self.position_ecef[-1])),np.arctan2(self.position_ecef[-1][1],self.position_ecef[-1][0])])]    
             self.orientation+=[self.quaternion_to_dcm(self.q)@[0,0,1]]
+            self.aoa+=[np.arccos(np.dot((self.velocity[-1]-np.cross(np.array([0,0,w_earth]),self.position[-1])),self.quaternion_to_dcm(self.q)@[0,0,1])/np.linalg.norm((self.velocity[-1]-np.cross(np.array([0,0,w_earth]),self.position[-1]))))]
 
             dqdt = self.quaternion_derivative(self.q, omega_body_frame)
             self.q += dqdt * dt
@@ -117,20 +136,38 @@ class traj:
             self.stage_masses[current_stage]-=self.thrust_magnitude/self.data['isp'][current_stage]/g*dt
             self.stage_propellant_masses[current_stage]-=self.thrust_magnitude/self.data['isp'][current_stage]/g*dt
 
+            out_str+=f"Time = {round(self.time[-1],2)} s,position = {self.position_ecef[-1]} lat_long = {self.lat_long[-1]/pi*180}\n"
+
+            self.state_history+=[self.current_state]
             self.time+=[self.time[-1]+dt]
             
             if self.stage_propellant_masses[current_stage]<0 and n<=self.number_of_stages:
-                print(f"Burnout positon (in earth centered earth fixed frame) = {self.position[-1]} km")
-                print(f"Orientation vector at burnout (in earth centered earth fixed frame) = {np.round(self.orientation[-1],9)}")
-                print(f"Downrange position from launch site (in earth centered earth fixed frame) = {np.round((self.position[-1]-self.position[0])/1e3,9)} km")
-                print(f"Downrange distance from launch site (in earth centered earth fixed frame) = {np.linalg.norm(self.position[-1]-self.position[0])/1e3} km")
-                print(f"Velocity vector at burnout (in earth centered earth fixed frame) = {np.round(self.velocity[-1],9)} m/s")
-                print(f"quaternion at burnout = {np.round(self.q,9)}")
-                print(f"Acceleration vector at burnout (in earth centered earth fixed frame) = {np.round(self.acceleration[-1],9)} m/s^2")
-                print(f"Velocity magnitude at burnout (in earth centered earth fixed frame) = {np.linalg.norm(self.velocity[-1])} m/s")
-                print(f"Altitude at burnout = {(np.linalg.norm(self.position[-1])-R_earth)/1000} km")
-                #print(f"Mass of stage {current_stage+1} at burnout = {self.stage_masses[current_stage]} kg")
+                if display_breakdown:
+                    print(f"Burnout positon (in earth centered inertial) = {self.position[-1]} m")
+                    print(f"Orientation vector at burnout (in earth centered inertial) = {np.round(self.orientation[-1],9)}")
+                    print(f"Downrange position from launch site (in earth centered inertial) = {np.round((self.position[-1]-self.position[0])/1e3,9)} km")
+                    print(f"Downrange distance from launch site (in earth centered inertial) = {np.linalg.norm(self.position[-1]-self.position[0])/1e3} km")
+                    print(f"Velocity vector at burnout (in earth centered inertial) = {np.round(self.velocity[-1],9)} m/s")
+                    print(f"quaternion at burnout = {np.round(self.q,9)}")
+                    print(f"Acceleration vector at burnout (in earth centered inertial) = {np.round(self.acceleration[-1],9)} m/s^2")
+                    print(f"Velocity magnitude at burnout (in earth centered inertial) = {np.linalg.norm(self.velocity[-1])} m/s")
+                    print(f"Altitude at burnout = {(np.linalg.norm(self.position[-1])-R_earth)/1000} km")
+
                 out_str+=f"Stage {current_stage+1} burnout:\nat {round((np.linalg.norm(self.position[-1])-R_earth)/1e3,2)} km at {round(self.time[-1]/60,2)} minutes\n"
+                out_str+=f"Burnout positon (in earth centered inertial) = {self.position[-1]} m\n"
+                out_str+=f"Orientation vector at burnout (in earth centered inertial) = {np.round(self.orientation[-1],9)}\n"
+                out_str+=f"Downrange position from launch site (in earth centered inertial) = {np.round((self.position[-1]-self.position[0])/1e3,9)} km\n"
+                out_str+=f"Downrange distance from launch site (in earth centered inertial) = {np.linalg.norm(self.position[-1]-self.position[0])/1e3} km\n"
+                out_str+=f"Velocity vector at burnout (in earth centered inertial) = {np.round(self.velocity[-1],9)} m/s\n"
+                out_str+=f"quaternion at burnout = {np.round(self.q,9)}\n"
+                out_str+=f"Acceleration vector at burnout (in earth centered inertial) = {np.round(self.acceleration[-1],9)} m/s^2\n"
+                out_str+=f"Velocity magnitude at burnout (in earth centered inertial) = {np.linalg.norm(self.velocity[-1])} m/s\n"
+                out_str+=f"Altitude at burnout = {(np.linalg.norm(self.position[-1])-R_earth)/1000} km\n"
+                
+                out_str+=f"Launchsite position at burnout (in earth centered inertial) = {np.linalg.solve(Rz,self.position[0])} m\n"
+                
+                #print(f"Mass of stage {current_stage+1} at burnout = {self.stage_masses[current_stage]} kg")
+                
                 self.burnouts+=[self.position[-1]]
                 self.burnout_times+=[self.time[-1]]
                 
@@ -141,6 +178,8 @@ class traj:
                     current_stage+=1    
                     self.thrust_by_weight=self.data['thrust by weight'][current_stage]
                     self.thrust_magnitude=self.thrust_by_weight*self.stage_masses[current_stage]*g
+                    self.current_state=f"Stage {current_stage+1}"
+
         
         #print(f"Out of loop, current altitude {(np.linalg.norm(self.position[-1])-R_earth)}")
 
@@ -159,9 +198,9 @@ class traj:
         self.total_delta_v+=np.abs(orbital_velocity_difference)
 
         #print(F"Required delta v {orbital_velocity_difference}")
-        available_delta_v=self.data["isp"][current_stage]*g*np.log(self.stage_masses[current_stage]/(self.stage_masses[current_stage]-self.stage_propellant_masses[current_stage]))
+        self.available_delta_v=self.data["isp"][current_stage]*g*np.log(self.stage_masses[current_stage]/(self.stage_masses[current_stage]-self.stage_propellant_masses[current_stage]))
         
-        if available_delta_v>np.abs(orbital_velocity_difference):
+        if self.available_delta_v>np.abs(orbital_velocity_difference):
             self.velocity[-1]=((g*R_earth**2/np.linalg.norm(self.position[-1]))**0.5)*(np.cross(np.cross(self.position[-1],self.velocity[-1]),self.position[-1])/np.linalg.norm(self.position[-1])**2/np.linalg.norm(self.velocity[-1]))
             self.velocity[-1]=np.cross(np.cross(self.position[-1],self.velocity[-1]),self.position[-1])/np.linalg.norm(self.position[-1])**2/np.linalg.norm(self.velocity[-1])
             self.velocity[-1]*=((g*R_earth**2/np.linalg.norm(self.position[-1]))**0.5)
@@ -175,18 +214,21 @@ class traj:
                 print(f"Angle difference {90-np.arccos(np.dot(self.position[-1],self.velocity[-1])/np.linalg.norm(self.position[-1])/np.linalg.norm(self.velocity[-1]))/np.pi*180} deg")
                 print(f"Ascent propellant left {self.stage_propellant_masses[current_stage]-propellant_used} kg")
                 print(f"Final insertion engine fire duration {np.abs(orbital_velocity_difference)/G_force_limit/g} s")
-                print(f"Total delta v {self.total_delta_v} m/s")
+                print(f"Total delta v {self.total_delta_v} m/s\n")
 
-                out_str+="********************************************************************************************************************************"
+                
                 out_str+=f"Final orbit {(np.linalg.norm(self.position[-1])-R_earth)/1000} km\n"
                 out_str+=f"Final velocity magnitude {np.linalg.norm(self.velocity[-1])} m/s\n"
                 out_str+=f"Required velocity magnitude {(g*R_earth**2/np.linalg.norm(self.position[-1]))**0.5} m/s\n"
-                #out_str+=f"Angle difference {90-np.arccos(np.dot(self.position[-1],self.velocity[-1])/np.linalg.norm(self.position[-1])/np.linalg.norm(self.velocity[-1]))/np.pi*180} deg\n"
+                out_str+=f"Angle difference {90-np.arccos(np.dot(self.position[-1],self.velocity[-1])/np.linalg.norm(self.position[-1])/np.linalg.norm(self.velocity[-1]))/np.pi*180} deg\n"
                 out_str+=f"Ascent propellant left {self.stage_propellant_masses[current_stage]-propellant_used} kg\n"
-
-
+                out_str+="********************************************************************************************************************************\n"
+        else:
+            if display_breakdown:
+                print(f"************ORBITAL VELOCITY NOT REACHED*****************\nAvailable Delta V : {self.available_delta_v}")
         self.burnouts=np.array(self.burnouts)
         if post_burnout:
+            self.current_state="Orbital coast"
             dt=dt/100
             while self.time[-1]<total_time:
 
@@ -195,6 +237,14 @@ class traj:
                 self.acceleration+=[gravity_eci_frame]
                 self.velocity+=[self.velocity[-1]+self.acceleration[-1]*dt]
                 self.position+=[self.position[-1]+self.velocity[-1]*dt+0.5*self.acceleration[-1]*dt*dt]
+                the=-w_earth*(self.time[-1]+dt)
+                Rz = np.array([[ np.cos(the), -np.sin(the), 0],
+                                [ np.sin(the),  np.cos(the), 0],
+                                [0,0,1]        ])
+                self.position_ecef+=[Rz@self.position[-1]]
+                self.lat_long+=[np.array([np.arcsin(self.position_ecef[-1][2]/np.linalg.norm(self.position_ecef[-1])),np.arctan2(self.position_ecef[-1][1],self.position_ecef[-1][0])])]
+
+                self.state_history+=[self.current_state]
 
                 self.time+=[self.time[-1]+dt]
         
@@ -539,6 +589,41 @@ class traj:
         if show_velocity_plots:
             plt.show()
 
+    def plot_magnitudes(self,altitude=True,velocity=False,aoa=False):
+        if altitude:
+            plt.figure()
+            self.altitudes=[(np.linalg.norm(self.position[i])-R_earth)/1e3 for i in range(len(self.position))]
+            plt.plot(self.time,self.altitudes)
+            self.altitudes_burnout=[(np.linalg.norm(self.burnouts[i])-R_earth)/1e3 for i in range(len(self.burnouts))]
+            plt.plot(self.time,self.altitudes)
+            plt.scatter(self.burnout_times,self.altitudes_burnout)
+            plt.title("Altitude vs Time")
+            plt.show()
+        if velocity:
+            plt.figure()
+            self.velocities=[(np.linalg.norm(self.velocity[i])) for i in range(len(self.velocity))]
+            plt.plot(self.time,self.velocities)
+            for times in self.burnout_times:
+                plt.plot([times,times],[np.min(self.velocities),np.max(self.velocities)])
+            plt.title("Velocity vs Time")
+            plt.show()
+        if aoa:
+            plt.figure()
+            plt.plot(self.time[0:len(self.aoa)],np.array(self.aoa)/pi*180)
+            for times in self.burnout_times:
+                plt.plot([times,times],[np.min(self.aoa),np.max(self.aoa)])
+            plt.title("AOA (degrees) vs Time")
+            plt.show()
+
+    def save_trajectory(self):
+        output_file = f"output files/{self.data['rocket name']} files/trajectory.csv"
+        with open(output_file, mode='w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(['State','Time (s)','Latitude','Longitude'])
+            for i in range(len(self.lat_long)):
+                writer.writerow([self.state_history[i],self.time[i],self.lat_long[i][0]/pi*180,self.lat_long[i][1]/pi*180+longitude/pi*180])
+        print(f"Trajectory data saved to {output_file}")
+
     def optimize_controls(self,x,print_stats=False):
         vector_start_time=x[0]
         vector_end_time=x[1]
@@ -656,7 +741,7 @@ class traj:
                     n1=n+(3-n)/(n_epoch-1)*i
                 n1=int(n1)
                 #start_time_array=np.linspace(start_time-delta_start_time,start_time+delta_start_time,n1)
-                start_time_array=[5]
+                start_time_array=[10]
                 end_time_array=np.linspace(end_time-delta_end_time,end_time+delta_end_time,n1)
                 beta_array=np.linspace(beta-delta_beta,beta+delta_beta,n1)
                 thrust_cutoff_array=np.linspace(thrust_cutoff-delta_thrust_cutoff,thrust_cutoff+delta_thrust_cutoff,n1)
@@ -681,6 +766,7 @@ class traj:
         self.mins=mins
         print("Optimal Parameters = ",mins,"\n")
         #self.model(vector_start_time=mins[0],vector_end_time=mins[1],beta_max=mins[2],thrust_cutoff_time=mins[3],post_burnout=True,display_breakdown=True)
+
 
 class step_one_boostback_traj:
 
@@ -765,31 +851,33 @@ class step_one_boostback_traj:
     def get_component(self,a,b):
         return np.dot(a,b)/np.linalg.norm(b)
 
-    def model(self,post_burnout=False,dt=dt,vector_start_time=10,vector_end_time=120,beta_max=0.2,beta_max_y=0.01,thrust_cutoff_time=300,total_time=total_time,display_breakdown=False):
+    def model(self,post_burnout=False,dt=dt,vector_start_time=10,vector_end_time=120,beta_max=0.2,beta_max_y=0.01,thrust_cutoff_time=30,total_time=total_time,display_breakdown=False):
         n=1
         out_str=f"\nRocket liftoff from {np.round(self.position[0]/1000,2)} km. Earth rotates along the Z-axis\n"
-        #current_stage=0
-        #self.thrust_by_weight=self.data['thrust by weight']
-        #self.thrust_magnitude=self.thrust_by_weight*self.step_mass*g
-        print((np.linalg.norm(self.position[-1])-R_earth)>0)
         while (np.linalg.norm(self.position[-1])-R_earth)>0:# and np.linalg.norm(self.position[-1])-R_earth>=0:
             if self.time[-1]>=vector_start_time:
                 #if self.stage_propellant_masses[current_stage]<0:
                     #print("Thrust cutoff due to lack of fuel")
-                print("flip maneuver startd at ",self.time[-1])
+                #print("flip maneuver started at ",self.time[-1])
                 self.thrust_magnitude= self.step_thrust_magnitude
                 #print(f"Thrust magnitude set to 0 at {self.time[-1]}s and {(np.linalg.norm(self.position[-1])-R_earth)}")
             
             if self.time[-1]>vector_end_time and np.linalg.norm(self.position[-1])-R_earth>60e3:
                 self.thrust_magnitude=0
-                print("flip maneuver ended at ",self.time[-1])
+                #print("flip maneuver ended at ",self.time[-1])
+                if len(self.burnouts)==0:
+                    self.burnouts+=[self.position[-1]]
+                    self.burnout_times+=[self.time[-1]]
                 #print(f"Thrust magnitude set to 0 at {self.time[-1]}s and {(np.linalg.norm(self.position[-1])-R_earth)}")
             
             if np.linalg.norm(self.position[-1])-R_earth<=60e3:
+                if len(self.burnouts)==1:
+                    self.burnouts+=[self.position[-1]]
+                    self.burnout_times+=[self.time[-1]]
                 if self.orientation_flipped==False:
-                    print(f"Flipping orientation at {self.time[-1]}s")
-                    print(f"Original orientation: {self.orientation[-1]}")
-                    print(f"Original quaternion: {self.q}")
+                    #print(f"Flipping orientation at {self.time[-1]}s")
+                    #print(f"Original orientation: {self.orientation[-1]}")
+                    #print(f"Original quaternion: {self.q}")
                     Rxflip = np.array([ [1      , 0            , 0],
                             [0      , np.cos(pi), -np.sin(pi)],
                             [0      , np.sin(pi),  np.cos(pi)]
@@ -798,25 +886,30 @@ class step_one_boostback_traj:
                     self.q =self.quat_mul(np.array([0,1,0,0]),self.q) 
                     self.q = self.normalize_quaternion(self.q)
                     self.orientation_flipped=True
-                    print(f"New orientation: {self.orientation[-1]}")
-                    print(f"New quaternion: {self.q}")
+                    #print(f"New orientation: {self.orientation[-1]}")
+                    #print(f"New quaternion: {self.q}")
                 #print(f"Thrust cutoff due to altitude {np.linalg.norm(self.position[-1])-R_earth}")
                 if self.velocity_reduction_boostback_duration<thrust_cutoff_time:
                     self.thrust_magnitude=self.single_engine_thrust
                     self.velocity_reduction_boostback_duration+=dt
-                    print("velocity reduction started at",self.time[-1])
+                    #print("velocity reduction started at",self.time[-1])
                 else:
                     self.thrust_magnitude=0
-                    print("velocity reduction ended at",self.time[-1])
+                    #print("velocity reduction ended at",self.time[-1])
+                    if len(self.burnouts)==2:
+                        self.burnouts+=[self.position[-1]]
+                        self.burnout_times+=[self.time[-1]]
                     #print(f"Thrust magnitude set to 0 at {self.time[-1]}s and {(np.linalg.norm(self.position[-1])-R_earth)}")  
                 #print(f"Thrust magnitude set to 0 at {self.time[-1]}s and {(np.linalg.norm(self.position[-1])-R_earth)}")
             
             if np.linalg.norm(self.position[-1])-R_earth<2e3:
                 self.thrust_magnitude=self.single_engine_thrust
 
-            if self.step_propellant_mass<=0 and self.thrust_magnitude>0:
-                print("Fuel depleted, thrust magnitude set to 0")
+            if self.step_propellant_mass<=0:# and self.thrust_magnitude>0:
+                #print("Fuel depleted, thrust magnitude set to 0")
                 self.thrust_magnitude=0
+                self.burnouts+=[self.position[-1]]
+                self.burnout_times+=[self.time[-1]]
 
             if self.time[-1]>=vector_start_time and self.time[-1]<=vector_end_time:
                 theta = -beta_max
@@ -836,8 +929,10 @@ class step_one_boostback_traj:
                         ])
             
             thrust_body_frame=Ry@Rx@np.array([0,0,self.thrust_magnitude])
-            torque_body_frame=np.cross(self.thrust_position,thrust_body_frame)
+            torque_body_frame=np.cross(self.thrust_position,thrust_body_frame)*1e1
             omega_body_frame=np.linalg.solve(self.inertia_matrix,torque_body_frame)
+            if np.linalg.norm(omega_body_frame)>0:  
+                print("torque=",omega_body_frame,torque_body_frame,np.linalg.norm(torque_body_frame))
             
             R_b_to_i = self.quaternion_to_dcm(self.q)
             thrust_eci_frame = R_b_to_i @ thrust_body_frame
@@ -867,8 +962,6 @@ class step_one_boostback_traj:
         if display_breakdown:
             print(f"GRAVITY DELTA V : {self.gravity_delta_v}, STEERING LOSS : {self.steering_loss}, DRAG DELTA V : {self.drag_delta_v}")
 
-        self.burnouts+=[self.position[-1]]
-        self.burnout_times+=[self.time[-1]]
         self.burnouts=np.array(self.burnouts)
 
         return out_str
@@ -1070,7 +1163,7 @@ class step_one_boostback_traj:
         self.mins=mins
         print("Optimal Parameters = ",mins,"\n")
         #self.model(vector_start_time=mins[0],vector_end_time=mins[1],beta_max=mins[2],thrust_cutoff_time=mins[3],post_burnout=True,display_breakdown=True)
-
+"""
 obj= step_one_boostback_traj(
     data={
         "rocket name": "Test Rocket",
@@ -1080,9 +1173,11 @@ obj= step_one_boostback_traj(
         "isp": 350,  # Specific impulse in seconds
         "single engine thrust": 2400e3,  # Thrust of a single engine
         "step masses": 128130+70286,  # Mass of the step in kg
-        "propellant mass": 150000,  # Mass of the propellant in kg
+        "propellant mass": 190000,  # Mass of the propellant in kg
         "q": np.array([0.69470791, -0.5096918,   0.40921423,  0.30023142]),  # Initial quaternion (no rotation)
     })  
-obj.model(vector_end_time=1000,beta_max=0.5)
-obj.plotter()
-obj.plot_altitudes()
+obj.model(vector_start_time=0,vector_end_time=30,beta_max=pi/4,beta_max_y=0.1,thrust_cutoff_time=30,dt=0.01)
+#obj.plotter()
+obj.plot_altitudes(show_velocity_plots=True)
+print(obj.total_delta_v)
+"""
