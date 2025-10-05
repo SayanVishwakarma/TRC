@@ -33,7 +33,7 @@ class delta_v:
 
 
     def calculate_boostback_delta_v(self):
-        self.boostback_delta_v = [2000.0,2000.0]  # Placeholder boostback cost
+        self.boostback_delta_v = [3000.0,2000.0]  # Placeholder boostback cost
 
     def calculate_total_delta_v(self):
         # Add losses and orbital requirement

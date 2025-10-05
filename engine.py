@@ -1015,7 +1015,7 @@ class engine:
     def pi_to(self):
         return (self.p_pbo-self.C_o2*self.m_z*self.cstar(self.R,self.p_c)/self.A_t)/(self.m_z*self.cstar(self.R_pbf,self.p_pbf)/self.A_t*(1+self.C_o3))
     
-    def Gf(self,R_pbo):
+    def Gf(self,R_pbo): #obsolete
         gamma_pbf=self.gamma(self.R_pbf)
         gamma_pbo=self.gamma(R_pbo)
         M_pbf=self.mol_w(self.R_pbf)
@@ -1031,7 +1031,7 @@ class engine:
         w_o=gamma_pbo/(gamma_pbo-1)*(self.R_0/M_pbo)*T_pbo*(1-(1/self.pi_to())**(gamma_pbo-1/gamma_pbo))
         return (self.R*c2*R_pbo/(1+R_pbo)-self.R*w_o)/(self.R*c2/(1+R_pbo)-w_o)
     
-    def Go(self,R_pbf):        
+    def Go(self,R_pbf):     #obsolete   
         gamma_pbf=self.gamma(R_pbf)
         gamma_pbo=self.gamma(self.R_pbo)
         M_pbf=self.mol_w(R_pbf)
@@ -1061,7 +1061,7 @@ class engine:
         self.R_pbo=ans.x[1]
 
 
-    def inner_convergence(self):
+    def inner_convergence(self): #obsolete
         while True:
             Fu=np.array([self.R_pbf-self.Gf(self.R_pbo),
                         self.R_pbo-self.Go(self.R_pbf)])

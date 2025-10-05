@@ -162,6 +162,7 @@ class traj:
                 out_str+=f"quaternion at burnout = {np.round(self.q,9)}\n"
                 out_str+=f"Acceleration vector at burnout (in earth centered inertial) = {np.round(self.acceleration[-1],9)} m/s^2\n"
                 out_str+=f"Velocity magnitude at burnout (in earth centered inertial) = {np.linalg.norm(self.velocity[-1])} m/s\n"
+                out_str+=f"Horizontal velocity magnitude at burnout (in earth centered inertial) = {(np.linalg.norm(self.velocity[-1])**2-(np.dot(self.velocity[-1],self.position[-1])/np.linalg.norm(self.position[-1]))**2)**0.5} m/s\n"
                 out_str+=f"Altitude at burnout = {(np.linalg.norm(self.position[-1])-R_earth)/1000} km\n"
                 
                 out_str+=f"Launchsite position at burnout (in earth centered inertial) = {np.linalg.solve(Rz,self.position[0])} m\n"
@@ -170,7 +171,10 @@ class traj:
                 
                 self.burnouts+=[self.position[-1]]
                 self.burnout_times+=[self.time[-1]]
-                
+                self.burnout_velocity=np.linalg.norm(self.velocity[-1])
+                self.burnout_velocity_horizontal=(np.linalg.norm(self.velocity[-1])**2-(np.dot(self.velocity[-1],self.position[-1])/np.linalg.norm(self.position[-1]))**2)**0.5
+                self.burnout_downrange_distance=np.linalg.norm(self.position[-1]-self.position[0])
+
                 out_str+="\n"
                 #current_stage+=1
                 n+=1
@@ -717,7 +721,7 @@ class traj:
                             self.model(vector_start_time=i,vector_end_time=j,beta_max=k,thrust_cutoff_time=l)
                             x=np.abs(self.angle)
                             y=self.orbital_velocity_difference
-                            if self.total_delta_v<total_delta_v and x<3 and y<0 and (self.orbit_difference)>0:#(np.abs(x)**2*np.abs(y))<prod_min:
+                            if self.total_delta_v<total_delta_v and x<3 and y<0 and (self.orbit_difference)>0 and self.burnout_downrange_distance<100e3:#and self.burnout_velocity_horizontal<2.5e3:#(np.abs(x)**2*np.abs(y))<prod_min:
                                 start_time_min=i*1
                                 end_time_min=j*1
                                 beta_min=k*1
