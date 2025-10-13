@@ -204,7 +204,7 @@ class traj:
         #print(F"Required delta v {orbital_velocity_difference}")
         self.available_delta_v=self.data["isp"][current_stage]*g*np.log(self.stage_masses[current_stage]/(self.stage_masses[current_stage]-self.stage_propellant_masses[current_stage]))
         
-        if self.available_delta_v>np.abs(orbital_velocity_difference):
+        if self.available_delta_v>np.abs(orbital_velocity_difference) or self.orbital_velocity_difference>0:
             self.velocity[-1]=((g*R_earth**2/np.linalg.norm(self.position[-1]))**0.5)*(np.cross(np.cross(self.position[-1],self.velocity[-1]),self.position[-1])/np.linalg.norm(self.position[-1])**2/np.linalg.norm(self.velocity[-1]))
             self.velocity[-1]=np.cross(np.cross(self.position[-1],self.velocity[-1]),self.position[-1])/np.linalg.norm(self.position[-1])**2/np.linalg.norm(self.velocity[-1])
             self.velocity[-1]*=((g*R_earth**2/np.linalg.norm(self.position[-1]))**0.5)
@@ -720,8 +720,9 @@ class traj:
                         for l in thrust_cutoff_array:
                             self.model(vector_start_time=i,vector_end_time=j,beta_max=k,thrust_cutoff_time=l)
                             x=np.abs(self.angle)
-                            y=self.orbital_velocity_difference
-                            if self.total_delta_v<total_delta_v and x<3 and y<0 and (self.orbit_difference)>0 and self.burnout_downrange_distance<100e3:#and self.burnout_velocity_horizontal<2.5e3:#(np.abs(x)**2*np.abs(y))<prod_min:
+                            #y=self.orbital_velocity_difference
+                            y=self.orbital_velocity_difference+self.available_delta_v
+                            if self.total_delta_v<total_delta_v and x<3 and y>0 and (self.orbit_difference)>0 and self.burnout_downrange_distance<250e3:#and self.burnout_velocity_horizontal<2.8e3:#(np.abs(x)**2*np.abs(y))<prod_min:
                                 start_time_min=i*1
                                 end_time_min=j*1
                                 beta_min=k*1
@@ -771,6 +772,44 @@ class traj:
         print("Optimal Parameters = ",mins,"\n")
         #self.model(vector_start_time=mins[0],vector_end_time=mins[1],beta_max=mins[2],thrust_cutoff_time=mins[3],post_burnout=True,display_breakdown=True)
 
+    def gp_optimiser_objective(self,x):
+        vector_start_time=x[0]
+        vector_end_time=x[1]
+        beta_max=x[2]
+        thrust_cutoff_time=x[3]
+        self.model(vector_start_time=vector_start_time,vector_end_time=vector_end_time,beta_max=beta_max,thrust_cutoff_time=thrust_cutoff_time,post_burnout=False)
+        #self.model(vector_start_time=vector_start_time,vector_end_time=vector_end_time,beta_max=beta_max,post_burnout=False)
+        x=np.abs(self.angle)
+        y=self.orbital_velocity_difference+self.available_delta_v
+        if x<3 and y>0 and (self.orbit_difference)>0:# and self.burnout_downrange_distance<250e3:
+            self.__init__(self.data_copy)
+            print(self.total_delta_v)
+            return self.total_delta_v
+        else:
+            self.__init__(self.data_copy)
+            print(1e10)
+            return 1e10
+
+    def gp_optimiser(self,n_calls=15,random_state=0):
+        from skopt import gp_minimize
+        print("Finding optimal parameters for the rocket using Gaussian Process Optimisation")
+        space = [
+            (10, 10+1e-5),  # vector_start_time
+            (20, 300),  # vector_end_time
+            (0.01, 0.2),  # beta_max
+            (200,800) # thrust_cutoff_time
+        ]
+        res = gp_minimize(self.gp_optimiser_objective,                  # the function to minimize
+                          space,      # the bounds on each dimension of x
+                          acq_func="EI",      # the acquisition function
+                          n_calls=n_calls,         # the number of evaluations of f
+                          n_initial_points=5,    # the number of random initialization points
+                          random_state=random_state)  # the random seed
+
+        print("Optimal Parameters = ",res.x,"\n")
+        self.model(vector_start_time=res.x[0],vector_end_time=res.x[1],beta_max=res.x[2],thrust_cutoff_time=res.x[3],post_burnout=False,display_breakdown=True)
+        self.plot_magnitudes()
+        self.mins=[float(x) for x in res.x]
 
 class step_one_boostback_traj:
 

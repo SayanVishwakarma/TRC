@@ -1,5 +1,5 @@
 {
-    "rocket name": "TRC Superheavy copy 2",
+    "rocket name": "TRC Superheavy v3",
     "target orbit": 500,
     "average isp": 350,
     "thrust by weight": [
@@ -12,8 +12,8 @@
         380
     ],
     "structural factors": [
-        0.055,
-        0.08
+        0.0795,
+        0.066
     ],
     "modify factors": false,
     "payload": 70000.0,
@@ -40,12 +40,6 @@
             50.0,
             0.11551724137931035,
             480.0
-        ],
-        [
-            10,
-            251.26582278481013,
-            0.025949367088607605,
-            361.5189873417722
         ]
     ],
     "updated structural factors": [

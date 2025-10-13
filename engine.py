@@ -1,4 +1,5 @@
 from __init__ import *
+
 class engine_obsolete_2:
     def __init__(self,engine_name,override_inputs=True):
         self.engine_name=engine_name
@@ -875,6 +876,9 @@ class engine_obsolete:
 
 class engine:
     def __init__(self,engine_name,override_inputs=True):
+        
+        self.create_interpolation_functions()
+
         self.engine_name=engine_name
         self.input_file="input files/engines/"+engine_name+".json"
         self.output_file="output files/engines/"+engine_name+".txt"
@@ -928,6 +932,53 @@ class engine:
         self.max_residual=0
 
         self.symbols = ["D_E", "Isp", "Thrust", "p_c", "m_f", "m_o", "m_tf", "m_to", "m_ff", "m_fo", "m_of", "m_oo", "p_f2", "p_o2", "p_f3", "p_o3", "p_f4", "p_o4", "pi_tf", "pi_to", "delta_p_f", "delta_p_o", "P_f", "P_o", "g_f", "g_o", "gamma_pbf", "gamma_pbo", "M_pbf", "M_pbo", "T_pbf", "T_pbo", "R_pbf", "R_pbo"]
+        
+
+    def create_interpolation_functions(self):#,query_pressure, query_of):
+        # Load the data
+        data = np.loadtxt("data files/LOXMETHANE.txt", skiprows=1)  # Skip header
+        
+        pressures = data[:, 0]
+        ofs = data[:, 1]
+        temps = data[:, 2]
+        isps = data[:, 3]
+        mws = data[:, 4]
+        cstars = data[:, 5]
+        gammas = data[:, 6]
+
+        # Stack (pressure, OF) pairs as interpolation input
+        points = np.column_stack((pressures, ofs))
+
+        # Create interpolators for each output
+        self.temp_interp = LinearNDInterpolator(points, temps)
+        self.isp_interp = LinearNDInterpolator(points, isps)
+        self.mw_interp = LinearNDInterpolator(points, mws)
+        self.cstar_interp = LinearNDInterpolator(points, cstars)
+        self.gamma_interp = LinearNDInterpolator(points, gammas)
+        '''
+        # Interpolate at desired (pressure, O/F)
+        T = self.temp_interp(query_pressure, query_of)
+        Isp = self.isp_interp(query_pressure, query_of)
+        MW = self.mw_interp(query_pressure, query_of)
+        Cstar = self.cstar_interp(query_pressure, query_of)
+        Gamma = self.gamma_interp(query_pressure, query_of)
+
+        if None in (T, Isp, MW, Cstar, Gamma) or any(np.isnan(x) for x in (T, Isp, MW, Cstar, Gamma)):
+            raise ValueError("Interpolation point outside data range or invalid. Pressure= {}, O/F={}".format(query_pressure, query_of))
+
+        return LinearNDInterpolator
+    
+        {
+            'Pressure': query_pressure,
+            'O/F': query_of,
+            'Temp (K)': T[()],
+            'Isp (m/s)': Isp[()],
+            'Mol. Weight': MW[()],
+            'C* (m/s)': Cstar[()],
+            'Gamma': Gamma[()]
+        }
+
+        '''
 
     def override_inputs(self):
         self.data["m_z"]=self.data["Thrust"]/self.isp(self.data["oxidiser by fuel"],self.data["p_c"])
@@ -939,22 +990,22 @@ class engine:
         self.fuel_data_heads=["O/F","temp","isp","mw","cstar","gamma"]
            
     def temperature(self,R,P):
-        return interpolate_combustion_data(P/1e5,R)["Temp (K)"]
+        return self.temp_interp(P/1e5,R)[()]#interpolate_combustion_data(P/1e5,R)["Temp (K)"]
     
     def isp(self,R,P):
-        return interpolate_combustion_data(P/1e5,R)["Isp (m/s)"]
+        return self.isp_interp(P/1e5,R)[()]#interpolate_combustion_data(P/1e5,R)["Isp (m/s)"]
     
     def mol_w(self,R,P):
-        return interpolate_combustion_data(P/1e5,R)["Mol. Weight"]*1e-3
+        return self.mw_interp(P/1e5,R)[()]*1e-3#interpolate_combustion_data(P/1e5,R)["Mol. Weight"]*1e-3
 
     def cstar(self,R,P):
-        return interpolate_combustion_data(P/1e5,R)["C* (m/s)"]
+        return self.cstar_interp(P/1e5,R)[()]#interpolate_combustion_data(P/1e5,R)["C* (m/s)"]
      
     def gamma(self,R,P):
-        return interpolate_combustion_data(P/1e5,R)["Gamma"]
+        return self.gamma_interp(P/1e5,R)[()]#interpolate_combustion_data(P/1e5,R)["Gamma"]
     
     def gas_constant(self,R,P):
-        return self.R_0/interpolate_combustion_data(P/1e5,R)["Mol. Weight"]*1e-3
+        return self.R_0/self.mol_w(P/1e5,R)[()]#interpolate_combustion_data(P/1e5,R)["Mol. Weight"]*1e-3
     
     def exit_diameter(self):
 
@@ -1049,12 +1100,12 @@ class engine:
     def objective_function(self,x):
         self.R_pbf=x[0]
         self.R_pbo=x[1]
-        errs=self.calculate_all_parameters(finding_eq=True,print_residuals=False,print_max_residual=True)
+        errs=self.calculate_all_parameters(finding_eq=True,print_residuals=False)#,print_max_residual=True)
         return errs    
     
     def inner_convergence2(self):
         x=self.R_pb
-        ans=root(self.objective_function,x,tol=1e-3)
+        ans=root(self.objective_function,x,tol=1e-6)
         print(f"Equilibrium Ratios are {ans.x}")
         self.R_pb=ans.x
         self.R_pbf=ans.x[0]
@@ -1082,7 +1133,7 @@ class engine:
         self.R_pbo=58
 
     def calculate_all_parameters(self,check_residuals=True,finding_eq=False,print_residuals=False,print_max_residual=False):
-        print(f"Calculating parameters for {self.engine_name} engine")
+        #print(f"Calculating parameters for {self.engine_name} engine")
         self.max_residual=0
         self.parameters={}
         self.parameters["Exit Diameter"]=self.exit_diameter()#((self.A_t*29.5)/np.pi)**0.5*2
@@ -1109,8 +1160,8 @@ class engine:
         self.parameters["oxidiser pump head"]=delta_p_o=self.delta_p_o(self.p_pbf)
         self.parameters["fuel turbopump power"]=P_f=m_f*delta_p_f/self.rho_f/self.eta_pf
         self.parameters["oxidiser turbopump power"]=P_o=m_o*delta_p_o/self.rho_o/self.eta_po
-        self.parameters["fuel-rich turbine power"]=g_f=m_tf*self.eta_tf*self.gamma(self.R_pbf,self.p_pbf)/(self.gamma(self.R_pbf,self.p_pbf)-1)*(self.R_0/self.mol_w(self.R_pbf,self.p_pbf))*self.temperature(self.R_pbf,self.p_pbf)*(1-(1/pi_tf)**(self.gamma(self.R_pbf,self.p_pbf)-1/self.gamma(self.R_pbf,self.p_pbf)))
-        self.parameters["oxidiser-rich turbine power"]=g_o=m_to*self.eta_to*self.gamma(self.R_pbo,self.p_pbo)/(self.gamma(self.R_pbo,self.p_pbo)-1)*(self.R_0/self.mol_w(self.R_pbo,self.p_pbo))*self.temperature(self.R_pbo,self.p_pbo)*(1-(1/pi_to)**(self.gamma(self.R_pbo,self.p_pbo)-1/self.gamma(self.R_pbo,self.p_pbo)))
+        self.parameters["fuel-rich turbine power"]=g_f=m_tf*self.eta_tf*self.gamma(self.R_pbf,self.p_pbf)/(self.gamma(self.R_pbf,self.p_pbf)-1)*(self.R_0/self.mol_w(self.R_pbf,self.p_pbf))*self.temperature(self.R_pbf,self.p_pbf)*(1-(1/pi_tf)**((self.gamma(self.R_pbf,self.p_pbf)-1)/self.gamma(self.R_pbf,self.p_pbf)))
+        self.parameters["oxidiser-rich turbine power"]=g_o=m_to*self.eta_to*self.gamma(self.R_pbo,self.p_pbo)/(self.gamma(self.R_pbo,self.p_pbo)-1)*(self.R_0/self.mol_w(self.R_pbo,self.p_pbo))*self.temperature(self.R_pbo,self.p_pbo)*(1-(1/pi_to)**((self.gamma(self.R_pbo,self.p_pbo)-1)/self.gamma(self.R_pbo,self.p_pbo)))
         self.parameters["gamma in fuel rich preburner"]=gamma_pbf=self.gamma(self.R_pbf,self.p_pbf)
         self.parameters["gamma in oxidiser rich preburner"]=gamma_pbo=self.gamma(self.R_pbo,self.p_pbo)
         self.parameters["molecular weight in fuel rich preburner"]=M_pbf=self.mol_w(self.R_pbf,self.p_pbf)*1e3
@@ -1159,8 +1210,8 @@ class engine:
             #eqs.append(P_f-p_f)
             eqs.append(P_o-g_o) #33
             #eqs.append(P_o-p_o)
-            eqs.append(g_f-m_tf*self.eta_tf*self.gamma(self.R_pbf,self.p_pbf)/(self.gamma(self.R_pbf,self.p_pbf)-1)*(self.R_0/self.mol_w(self.R_pbf,self.p_pbf))*self.temperature(self.R_pbf,self.p_pbf)*(1-(1/pi_tf)**(self.gamma(self.R_pbf,self.p_pbf)-1/self.gamma(self.R_pbf,self.p_pbf)))) #34
-            eqs.append(g_o-m_to*self.eta_to*self.gamma(self.R_pbo,self.p_pbo)/(self.gamma(self.R_pbo,self.p_pbo)-1)*(self.R_0/self.mol_w(self.R_pbo,self.p_pbo))*self.temperature(self.R_pbo,self.p_pbo)*(1-(1/pi_to)**(self.gamma(self.R_pbo,self.p_pbo)-1/self.gamma(self.R_pbo,self.p_pbo)))) #35
+            eqs.append(g_f-m_tf*self.eta_tf*self.gamma(self.R_pbf,self.p_pbf)/(self.gamma(self.R_pbf,self.p_pbf)-1)*(self.R_0/self.mol_w(self.R_pbf,self.p_pbf))*self.temperature(self.R_pbf,self.p_pbf)*(1-(1/pi_tf)**((self.gamma(self.R_pbf,self.p_pbf)-1)/self.gamma(self.R_pbf,self.p_pbf)))) #34
+            eqs.append(g_o-m_to*self.eta_to*self.gamma(self.R_pbo,self.p_pbo)/(self.gamma(self.R_pbo,self.p_pbo)-1)*(self.R_0/self.mol_w(self.R_pbo,self.p_pbo))*self.temperature(self.R_pbo,self.p_pbo)*(1-(1/pi_to)**((self.gamma(self.R_pbo,self.p_pbo)-1)/self.gamma(self.R_pbo,self.p_pbo)))) #35
             eqs.append((P_f-m_f*delta_p_f/self.rho_f/self.eta_pf)) #36
             eqs.append((P_o-m_o*delta_p_o/self.rho_o/self.eta_po)) #37
             #eqs.append((delta_p_f-(R_pbo-self.R)*(1+R_pbf)/(R_pbo-R_pbf)*(self.eta_tf*self.rho_f*self.eta_pf)*(self.gamma_pbf/(self.gamma_pbf-1))*(self.R_0/self.M_pbf)*self.T_pbf*(1-(1/pi_tf)**(self.gamma_pbf-1/self.gamma_pbf)))/a)
@@ -1216,7 +1267,22 @@ class engine:
                     self.max_residual=np.abs((eqs[i]/eqs2[i]))*100
         if print_max_residual:
             print(f"Max Residual = {round(self.max_residual,3)}%")
-
+            '''
+            print(f"Gamma in fuel rich preburner = {self.gamma(self.R_pbf,self.p_pbf)}")
+            print(f"Gamma in oxidiser rich preburner = {self.gamma(self.R_pbo,self.p_pbo)}")
+            print(f"Molecular weight in fuel rich preburner = {self.mol_w(self.R_pbf,self.p_pbf)*1e3} g/mol")
+            print(f"Molecular weight in oxidiser rich preburner = {self.mol_w(self.R_pbo,self.p_pbo)*1e3} g/mol")
+            print(f"Cp in fuel rich preburner = {self.gamma(self.R_pbf,self.p_pbf)/(self.gamma(self.R_pbf,self.p_pbf)-1)*(self.R_0/self.mol_w(self.R_pbf,self.p_pbf))} J/kgK")
+            print(f"Cp in oxidiser rich preburner = {self.gamma(self.R_pbo,self.p_pbo)/(self.gamma(self.R_pbo,self.p_pbo)-1)*(self.R_0/self.mol_w(self.R_pbo,self.p_pbo))} J/kgK")
+            print(f"Temperature in fuel rich preburner = {self.temperature(self.R_pbf,self.p_pbf)} K")
+            print(f"Temperature in oxidiser rich preburner = {self.temperature(self.R_pbo,self.p_pbo)} K")
+            print(f"Pressure ratio in fuel rich turbine = {pi_tf}")
+            print(f"Pressure ratio in oxidiser rich turbine = {pi_to}")
+            print(f"Mass flow rate through fuel rich turbine = {m_tf} kg/s")
+            print(f"Mass flow rate through oxidiser rich turbine = {m_to} kg/s")
+            print(f"Fuel Turbine Power = {m_tf*self.eta_tf*self.gamma(self.R_pbf,self.p_pbf)/(self.gamma(self.R_pbf,self.p_pbf)-1)*(self.R_0/self.mol_w(self.R_pbf,self.p_pbf))*self.temperature(self.R_pbf,self.p_pbf)*(1-(1/pi_tf)**((self.gamma(self.R_pbf,self.p_pbf)-1)/self.gamma(self.R_pbf,self.p_pbf)))}")
+            print(f"Oxidiser Turbine Power = {m_to*self.eta_to*self.gamma(self.R_pbo,self.p_pbo)/(self.gamma(self.R_pbo,self.p_pbo)-1)*(self.R_0/self.mol_w(self.R_pbo,self.p_pbo))*self.temperature(self.R_pbo,self.p_pbo)*(1-(1/pi_to)**((self.gamma(self.R_pbo,self.p_pbo)-1)/self.gamma(self.R_pbo,self.p_pbo)))}")
+            '''
         if finding_eq:
             return eqs[31]/eqs2[31],eqs[32]/eqs2[32]
 
@@ -1261,20 +1327,20 @@ class engine:
             elif "temperature" in key:
                 print(f"{key} ({self.symbols[i]}) = {round(self.parameters[key],2)} K")
             else:
-                print(f"{key} ({self.symbols[i]}) ={round(self.parameters[key],3)}")
+                print(f"{key} ({self.symbols[i]}) = {round(self.parameters[key],3)}")
             i+=1
             ##print("="*70)
 
         if print_residual:
             print()
-            print(f"--- MAX RESIDUAL = {round(self.max_residual,3)}% ---")
+            print(f"--- MAX RESIDUAL = {round(self.max_residual,9)}% ---")
         sys.stdout.close()
         sys.stdout = sys.__stdout__
 
 
 eng=engine("2400kn_new_code")
 eng.inner_convergence2()
-eng.calculate_all_parameters(print_residuals=True)
+eng.calculate_all_parameters(print_residuals=False,print_max_residual=True)
 eng.get_output()
 #print(eng.c_star())
 #print(eng.cstar(eng.R))3

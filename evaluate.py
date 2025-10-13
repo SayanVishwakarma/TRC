@@ -123,12 +123,15 @@ class evaluate:
         #traj.mins=(5, 60.003144304746236, 0.1237625780263158, 420.4619684100563)
         #traj.mins=(5, 80.29662781038536, 0.11436489662203948, 480.0)
         #traj.mins=(5, 184.48275862068965, 0.03482758620689656, 480.0)
-        traj.simulate_trajectory(n=10,n_epochs=1,dynamic_n=True)
+        traj.simulate_trajectory(n=80,n_epochs=1,dynamic_n=True)
                                  #,start_time=20,delta_start_time=15
                                  #,end_time=100,delta_end_time=50
                                  #,beta=0.1,delta_beta=0.09,
                                  #thrust_cutoff=5*60,delta_thrust_cutoff=3*60)
-        if traj.mins!=(0,0,0,0):
+
+        #traj.gp_optimiser(n_calls=100)
+                                
+        if not(traj.mins==(0,0,0,0) or traj.mins==[0,0,0,0]):
             if "optimal launch parameters" in data.keys():
                 data["optimal launch parameters"]+=[traj.mins]
             else:
@@ -147,11 +150,12 @@ class evaluate:
                                 total_time=1.7*60*60,
                                 display_breakdown=True)
             #traj.plot_altitudes()
-            traj.plotter()
+            #traj.plotter()
             #print(traj.total_rotation*180/pi)
             traj.save_trajectory()
-            traj.plot_magnitudes()#aoa=True)
+            #traj.plot_magnitudes()#aoa=True)
             #traj.dyn_plotter(animation_speed=5000)
+            print()
                 
         
         # Redirect stdout to the output text file
@@ -333,6 +337,6 @@ class evaluate:
         print(f"Sweep complete. Results saved to {output_excel}")
     
     #main("TRC Heavy 2")
-    main("TRC Superheavy copy 2")
+    main("TRC Superheavy v3")
     #main("TRC Heavy")
     #sweep("TRC Heavy tank dia sweep")
